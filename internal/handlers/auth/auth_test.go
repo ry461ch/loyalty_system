@@ -14,8 +14,8 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
-	"github.com/ry461ch/loyalty_system/internal/storage/memory"
 	"github.com/ry461ch/loyalty_system/internal/services/user"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory"
 )
 
 func mockRouter(authHandlers *AuthHandlers) chi.Router {
@@ -27,7 +27,7 @@ func mockRouter(authHandlers *AuthHandlers) chi.Router {
 
 func TestRegister(t *testing.T) {
 	existingUser := user.InputUser{
-		Login: "test",
+		Login:    "test",
 		Password: "test",
 	}
 
@@ -51,7 +51,7 @@ func TestRegister(t *testing.T) {
 		{
 			testName: "successful registration",
 			requestBody: &user.InputUser{
-				Login: "new",
+				Login:    "new",
 				Password: "test",
 			},
 			expectedCode: http.StatusOK,
@@ -59,14 +59,14 @@ func TestRegister(t *testing.T) {
 		{
 			testName: "user already exists",
 			requestBody: &user.InputUser{
-				Login: existingUser.Login,
+				Login:    existingUser.Login,
 				Password: "test",
 			},
 			expectedCode: http.StatusConflict,
 		},
 		{
-			testName: "bad request",
-			requestBody: nil,
+			testName:     "bad request",
+			requestBody:  nil,
 			expectedCode: http.StatusBadRequest,
 		},
 	}
@@ -85,7 +85,7 @@ func TestRegister(t *testing.T) {
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
 				SetBody(req).
-				Execute(http.MethodPost, srv.URL + "/api/user/register")
+				Execute(http.MethodPost, srv.URL+"/api/user/register")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 		})
 	}
@@ -93,7 +93,7 @@ func TestRegister(t *testing.T) {
 
 func TestAuthenticate(t *testing.T) {
 	existingUser := user.InputUser{
-		Login: "test",
+		Login:    "test",
 		Password: "test",
 	}
 
@@ -117,7 +117,7 @@ func TestAuthenticate(t *testing.T) {
 		{
 			testName: "successful authentication",
 			requestBody: &user.InputUser{
-				Login: existingUser.Login,
+				Login:    existingUser.Login,
 				Password: existingUser.Password,
 			},
 			expectedCode: http.StatusOK,
@@ -125,7 +125,7 @@ func TestAuthenticate(t *testing.T) {
 		{
 			testName: "user not exist",
 			requestBody: &user.InputUser{
-				Login: "invalid_login",
+				Login:    "invalid_login",
 				Password: "test",
 			},
 			expectedCode: http.StatusUnauthorized,
@@ -133,14 +133,14 @@ func TestAuthenticate(t *testing.T) {
 		{
 			testName: "invalid password",
 			requestBody: &user.InputUser{
-				Login: existingUser.Login,
+				Login:    existingUser.Login,
 				Password: "invalid_password",
 			},
 			expectedCode: http.StatusUnauthorized,
 		},
 		{
-			testName: "bad request",
-			requestBody: nil,
+			testName:     "bad request",
+			requestBody:  nil,
 			expectedCode: http.StatusBadRequest,
 		},
 	}
@@ -159,7 +159,7 @@ func TestAuthenticate(t *testing.T) {
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
 				SetBody(req).
-				Execute(http.MethodPost, srv.URL + "/api/user/login")
+				Execute(http.MethodPost, srv.URL+"/api/user/login")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 		})
 	}
