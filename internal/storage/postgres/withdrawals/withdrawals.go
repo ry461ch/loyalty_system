@@ -64,13 +64,21 @@ func (wps *WithdrawalPGStorage) InitializeWithdrawalPGStorage(ctx context.Contex
 	return nil
 }
 
-func (wps *WithdrawalPGStorage) InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
+func (wps *WithdrawalPGStorage) InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, tx *transaction.Trx) error {
 	insertWithdrawalQuery := `
 		INSERT INTO content.withdrawals (id, order_id, user_id, sum)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO NOTHING;
 	`
-	_, err := trx.ExecContext(ctx, insertWithdrawalQuery, *inputWithdrawal.ID, inputWithdrawal.OrderID, *inputWithdrawal.UserID, inputWithdrawal.Sum)
+	if tx == nil {
+		var err error
+		tx, err = wps.BeginTx(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err := tx.ExecContext(ctx, insertWithdrawalQuery, *inputWithdrawal.ID, inputWithdrawal.OrderID, *inputWithdrawal.UserID, inputWithdrawal.Sum)
 	return err
 }
 

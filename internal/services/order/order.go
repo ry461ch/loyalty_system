@@ -25,8 +25,12 @@ func NewOrderService(orderStorage storage.OrderStorage, moneyService services.Mo
 	}
 }
 
-func (os *OrderService) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
-	return os.orderStorage.GetOrders(ctx, userID)
+func (os *OrderService) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
+	return os.orderStorage.GetUserOrders(ctx, userID)
+}
+
+func (os *OrderService) GetWaitingOrderIDs(ctx context.Context) ([]string, error) {
+	return os.orderStorage.GetWaitingOrderIDs(ctx)
 }
 
 func (os *OrderService) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error {

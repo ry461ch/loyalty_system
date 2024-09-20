@@ -77,7 +77,7 @@ func TestSaveOrder(t *testing.T) {
 			err := orderService.InsertOrder(context.TODO(), tc.userID, tc.orderID)
 			assert.ErrorIs(t, tc.expectedSavingResult, err, "exceptions don't match")
 
-			ordersInDB, _ := orderStorage.GetOrders(context.TODO(), tc.userID)
+			ordersInDB, _ := orderStorage.GetUserOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrdersNum, len(ordersInDB), "orders num don't match")
 		})
 	}
@@ -146,7 +146,7 @@ func TestUpdateOrder(t *testing.T) {
 			err := orderService.UpdateOrder(context.TODO(), &tc.inputOrder)
 			if tc.expectedSavingResult == nil {
 				assert.Nil(t, err, "not expected error")
-				ordersInDB, _ := orderStorage.GetOrders(context.TODO(), existingUserID)
+				ordersInDB, _ := orderStorage.GetUserOrders(context.TODO(), existingUserID)
 				assert.Equal(t, tc.inputOrder, ordersInDB[0], "orders not equal")
 			} else {
 				assert.ErrorIs(t, err, tc.expectedSavingResult, "exceptions don't match")
@@ -158,7 +158,7 @@ func TestUpdateOrder(t *testing.T) {
 	}
 }
 
-func TestGetOrders(t *testing.T) {
+func TestGetUserOrders(t *testing.T) {
 	accrual := float64(500)
 	existingUserID := uuid.New()
 	existingOrders := []order.Order{
@@ -204,8 +204,61 @@ func TestGetOrders(t *testing.T) {
 			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 			orderService := NewOrderService(orderStorage, moneyService)
 
-			userOrders, _ := orderService.GetOrders(context.TODO(), tc.userID)
+			userOrders, _ := orderService.GetUserOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrders, userOrders, "orders are not equal")
 		})
+	}
+}
+
+func TestGetWaitingOrderIDs(t *testing.T) {
+	accrual := float64(500)
+	existingUser1ID := uuid.New()
+	existingOrdersUser1 := map[string]order.Order{
+		"1115": {
+			ID:        "1115",
+			Status:    order.PROCESSING,
+			CreatedAt: time.Now().UTC(),
+		},
+		"1321": {
+			ID:        "1321",
+			Status:    order.INVALID,
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	existingUser2ID := uuid.New()
+	existingOrdersUser2 := map[string]order.Order{
+		"1124": {
+			ID:        "1124",
+			Status:    order.PROCESSED,
+			CreatedAt: time.Now().UTC(),
+			Accrual:   &accrual,
+		},
+		"1131": {
+			ID:        "1131",
+			Status:    order.NEW,
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	expectedOrderIDs := []string{"1131", "1115"}
+
+	orderStorage := ordermemstorage.NewOrderMemStorage()
+	for _, existingOrder := range existingOrdersUser1 {
+		orderStorage.InsertOrder(context.TODO(), existingUser1ID, existingOrder.ID, nil)
+		orderStorage.UpdateOrder(context.TODO(), &existingOrder, nil)
+	}
+	for _, existingOrder := range existingOrdersUser2 {
+		orderStorage.InsertOrder(context.TODO(), existingUser2ID, existingOrder.ID, nil)
+		orderStorage.UpdateOrder(context.TODO(), &existingOrder, nil)
+	}
+
+	balanceStorage := balancememstorage.NewBalanceMemStorage()
+	withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
+	orderService := NewOrderService(orderStorage, moneyService)
+
+	waitingOrderIDs, _ := orderService.GetWaitingOrderIDs(context.TODO())
+	assert.Equal(t, len(expectedOrderIDs), len(waitingOrderIDs), "num of orders don't match")
+	for _, userOrderID := range waitingOrderIDs {
+		assert.Contains(t, expectedOrderIDs, userOrderID, "user orders contains not waiting order id")
 	}
 }

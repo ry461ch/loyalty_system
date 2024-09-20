@@ -69,7 +69,23 @@ func (oms *OrderMemStorage) UpdateOrder(ctx context.Context, newOrder *order.Ord
 	return nil
 }
 
-func (oms *OrderMemStorage) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
+func (oms *OrderMemStorage) GetWaitingOrderIDs(ctx context.Context) ([]string, error) {
+	var orderIDs []string
+	oms.usersToOrdersMap.Range(func(key any, val any) bool {
+		userOrders := val.(map[string]order.Order)
+		for orderID, userOrder := range userOrders {
+			if userOrder.Status == order.NEW || userOrder.Status == order.PROCESSING {
+				orderIDs = append(orderIDs, orderID)
+			}
+		}
+
+		return true
+	})
+
+	return orderIDs, nil
+}
+
+func (oms *OrderMemStorage) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
 	val, ok := oms.usersToOrdersMap.Load(userID)
 	if !ok {
 		return []order.Order{}, nil

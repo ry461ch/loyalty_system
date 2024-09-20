@@ -25,7 +25,7 @@ type MoneyService interface {
 }
 
 type OrderService interface {
-	GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
+	GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
 	InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error
 	UpdateOrder(ctx context.Context, updatedOrder *order.Order) error
 }

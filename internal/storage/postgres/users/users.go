@@ -79,11 +79,20 @@ func (ups *UserPGStorage) GetUser(ctx context.Context, login string) (*user.User
 	return &userInDB, nil
 }
 
-func (ups *UserPGStorage) InsertUser(ctx context.Context, newUser *user.User, trx *transaction.Trx) error {
+func (ups *UserPGStorage) InsertUser(ctx context.Context, newUser *user.User, tx *transaction.Trx) error {
 	insertUserQuery := `
 		INSERT INTO content.users (id, login, pass_hash) VALUES ($1, $2, $3);
 	`
-	_, err := trx.ExecContext(ctx, insertUserQuery, newUser.ID, newUser.Login, newUser.PasswordHash)
+
+	if tx == nil {
+		var err error
+		tx, err = ups.BeginTx(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err := tx.ExecContext(ctx, insertUserQuery, newUser.ID, newUser.Login, newUser.PasswordHash)
 	return err
 }
 

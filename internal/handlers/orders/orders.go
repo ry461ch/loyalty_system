@@ -63,7 +63,7 @@ func (oh *OrderHandlers) GetOrders(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	orders, err := oh.orderService.GetOrders(req.Context(), userID)
+	orders, err := oh.orderService.GetUserOrders(req.Context(), userID)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

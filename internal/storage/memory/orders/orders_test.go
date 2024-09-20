@@ -151,9 +151,58 @@ func TestGetOrders(t *testing.T) {
 			}
 			storage.usersToOrdersMap.Store(existingUserID, existingOrders)
 
-			userOrders, _ := storage.GetOrders(context.TODO(), tc.userID)
+			userOrders, _ := storage.GetUserOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrdersNum, len(userOrders), "num of orders not equal")
 		})
+	}
+}
+
+func TestGetWaitingOrders(t *testing.T) {
+	accrual := float64(500)
+	existingUser1ID := uuid.New()
+
+	existingOrdersUser1 := map[string]order.Order{
+		"1115": {
+			ID:        "1115",
+			Status:    order.PROCESSING,
+			CreatedAt: time.Now().UTC(),
+		},
+		"1321": {
+			ID:        "1321",
+			Status:    order.INVALID,
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	existingUser2ID := uuid.New()
+	existingOrdersUser2 := map[string]order.Order{
+		"1124": {
+			ID:        "1124",
+			Status:    order.PROCESSED,
+			CreatedAt: time.Now().UTC(),
+			Accrual:   &accrual,
+		},
+		"1131": {
+			ID:        "1131",
+			Status:    order.NEW,
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	expectedOrderIDs := []string{"1131", "1115"}
+	
+	storage := NewOrderMemStorage()
+	for existingOrderID := range existingOrdersUser1 {
+		storage.ordersToUsersMap.Store(existingOrderID, existingUser1ID)
+	}
+	for existingOrderID := range existingOrdersUser2 {
+		storage.ordersToUsersMap.Store(existingOrderID, existingUser2ID)
+	}
+	storage.usersToOrdersMap.Store(existingUser1ID, existingOrdersUser1)
+	storage.usersToOrdersMap.Store(existingUser2ID, existingOrdersUser2)
+
+	waitingOrderIDs, _ := storage.GetWaitingOrderIDs(context.TODO())
+	assert.Equal(t, len(expectedOrderIDs), len(waitingOrderIDs), "num of orders don't match")
+	for _, userOrderID := range waitingOrderIDs {
+		assert.Contains(t, expectedOrderIDs, userOrderID, "user orders contains not waiting order id")
 	}
 }
 

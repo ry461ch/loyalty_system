@@ -21,7 +21,8 @@ type UserStorage interface {
 type OrderStorage interface {
 	GetOrderUserID(ctx context.Context, orderID string) (*uuid.UUID, error)
 	InsertOrder(ctx context.Context, userID uuid.UUID, orderID string, trx *transaction.Trx) error
-	GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
+	GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
+	GetWaitingOrderIDs(ctx context.Context) ([]string, error)
 	UpdateOrder(ctx context.Context, order *order.Order, trx *transaction.Trx) error
 	BeginTx(ctx context.Context) (*transaction.Trx, error)
 }

@@ -81,15 +81,24 @@ func (ops *OrderPGStorage) GetOrderUserID(ctx context.Context, orderID string) (
 	return &userID, nil
 }
 
-func (ops *OrderPGStorage) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string, trx *transaction.Trx) error {
+func (ops *OrderPGStorage) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string, tx *transaction.Trx) error {
 	insertOrderQuery := `
 		INSERT INTO content.orders (id, user_id) VALUES ($1, $2);
 	`
-	_, err := trx.ExecContext(ctx, insertOrderQuery, orderID, userID)
+
+	if tx == nil {
+		var err error
+		tx, err = ops.BeginTx(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err := tx.ExecContext(ctx, insertOrderQuery, orderID, userID)
 	return err
 }
 
-func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, trx *transaction.Trx) error {
+func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, tx *transaction.Trx) error {
 	updateOrderQuery := `
 		UPDATE content.orders
 		SET
@@ -105,11 +114,53 @@ func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, 
 			Valid:   true,
 		}
 	}
-	_, err := trx.ExecContext(ctx, updateOrderQuery, order.ID, order.Status, accrual)
+
+	if tx == nil {
+		var err error
+		tx, err = ops.BeginTx(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err := tx.ExecContext(ctx, updateOrderQuery, order.ID, order.Status, accrual)
 	return err
 }
 
-func (ops *OrderPGStorage) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
+func (ops *OrderPGStorage) GetWaitingOrderIDs(ctx context.Context) ([]string, error) {
+	getOrdersFromDB := `
+		SELECT id
+		FROM content.orders
+		WHERE status = 'NEW' OR status = 'PROCESSING'
+		ORDER BY created_at ASC;
+	`
+
+	rows, err := ops.DB.QueryContext(ctx, getOrdersFromDB)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	orderIDs := []string{}
+	for rows.Next() {
+		var orderID string
+
+		err = rows.Scan(&orderID)
+		if err != nil {
+			return nil, err
+		}
+
+		orderIDs = append(orderIDs, orderID)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return orderIDs, nil
+}
+
+func (ops *OrderPGStorage) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
 	getOrdersFromDB := `
 		SELECT id, status, accrual, created_at
 		FROM content.orders

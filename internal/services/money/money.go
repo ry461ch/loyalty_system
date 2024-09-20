@@ -79,11 +79,20 @@ func (ms *MoneyService) Withdraw(ctx context.Context, inputWithdrawal *withdrawa
 	return err
 }
 
-func (ms *MoneyService) AddAccrual(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error {
+func (ms *MoneyService) AddAccrual(ctx context.Context, userID uuid.UUID, amount float64, tx *transaction.Trx) error {
 	if amount <= 0 {
 		return exceptions.NewBalanceBadAmountFormatError()
 	}
-	return ms.balanceStorage.AddBalance(ctx, userID, amount, trx)
+
+	if tx == nil {
+		var err error
+		tx, err = ms.balanceStorage.BeginTx(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return ms.balanceStorage.AddBalance(ctx, userID, amount, tx)
 }
 
 func (ms *MoneyService) GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error) {
