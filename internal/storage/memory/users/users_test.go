@@ -46,8 +46,8 @@ func TestInsertUser(t *testing.T) {
 			storage.users.Store(existingUser.Login, existingUser)
 
 			storage.InsertUser(context.TODO(), &tc.inputUser, nil)
-			userInDb, _ := storage.users.Load(tc.inputUser.Login)
-			assert.Equal(t, tc.inputUser, userInDb, "users not equal")
+			userInDB, _ := storage.users.Load(tc.inputUser.Login)
+			assert.Equal(t, tc.inputUser, userInDB, "users not equal")
 		})
 	}
 }
@@ -81,12 +81,12 @@ func TestGetUser(t *testing.T) {
 			storage := NewUserMemStorage()
 			storage.users.Store(existingUser.Login, existingUser)
 
-			userInDb, err := storage.GetUser(context.TODO(), tc.login)
-			if userInDb == nil {
+			userInDB, err := storage.GetUser(context.TODO(), tc.login)
+			if userInDB == nil {
 				assert.False(t, false)
 			}
 			if tc.expectedUser != nil {
-				assert.Equal(t, *tc.expectedUser, *userInDb, "users not equal")
+				assert.Equal(t, *tc.expectedUser, *userInDB, "users not equal")
 			} else {
 				assert.ErrorIs(t, err, exceptions.NewUserNotFoundError(), "exceptions don't match")
 			}

@@ -75,8 +75,8 @@ func (wms *WithdrawalMemStorage) GetWithdrawal(ctx context.Context, ID uuid.UUID
 		withdrawalsVal = map[uuid.UUID]withdrawal.Withdrawal{}
 	}
 	userWithdrawals := withdrawalsVal.(map[uuid.UUID]withdrawal.Withdrawal)
-	withdrawalInDb := userWithdrawals[ID]
-	return &withdrawalInDb, nil
+	withdrawalInDB := userWithdrawals[ID]
+	return &withdrawalInDB, nil
 }
 
 func (*WithdrawalMemStorage) BeginTx(ctx context.Context) (*transaction.Trx, error) {

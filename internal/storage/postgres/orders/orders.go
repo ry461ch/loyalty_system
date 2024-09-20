@@ -65,7 +65,7 @@ func (ops *OrderPGStorage) InitializeOrderPGStorage(ctx context.Context, DB *sql
 	return nil
 }
 
-func (ops *OrderPGStorage) GetOrderUserId(ctx context.Context, orderID string) (*uuid.UUID, error) {
+func (ops *OrderPGStorage) GetOrderUserID(ctx context.Context, orderID string) (*uuid.UUID, error) {
 	getOrderFromDB := `
 		SELECT user_id FROM content.orders WHERE id = $1;
 	`

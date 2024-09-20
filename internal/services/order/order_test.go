@@ -77,8 +77,8 @@ func TestSaveOrder(t *testing.T) {
 			err := orderService.InsertOrder(context.TODO(), tc.userID, tc.orderID)
 			assert.ErrorIs(t, tc.expectedSavingResult, err, "exceptions don't match")
 
-			ordersInDb, _ := orderStorage.GetOrders(context.TODO(), tc.userID)
-			assert.Equal(t, tc.expectedOrdersNum, len(ordersInDb), "orders num don't match")
+			ordersInDB, _ := orderStorage.GetOrders(context.TODO(), tc.userID)
+			assert.Equal(t, tc.expectedOrdersNum, len(ordersInDB), "orders num don't match")
 		})
 	}
 }
@@ -146,14 +146,14 @@ func TestUpdateOrder(t *testing.T) {
 			err := orderService.UpdateOrder(context.TODO(), &tc.inputOrder)
 			if tc.expectedSavingResult == nil {
 				assert.Nil(t, err, "not expected error")
-				ordersInDb, _ := orderStorage.GetOrders(context.TODO(), existingUserID)
-				assert.Equal(t, tc.inputOrder, ordersInDb[0], "orders not equal")
+				ordersInDB, _ := orderStorage.GetOrders(context.TODO(), existingUserID)
+				assert.Equal(t, tc.inputOrder, ordersInDB[0], "orders not equal")
 			} else {
 				assert.ErrorIs(t, err, tc.expectedSavingResult, "exceptions don't match")
 			}
 
-			balanceInDb, _ := balanceStorage.GetBalance(context.TODO(), existingUserID)
-			assert.Equal(t, tc.expectedBalance, *balanceInDb, "balances not equal")
+			balanceInDB, _ := balanceStorage.GetBalance(context.TODO(), existingUserID)
+			assert.Equal(t, tc.expectedBalance, *balanceInDB, "balances not equal")
 		})
 	}
 }

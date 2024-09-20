@@ -31,8 +31,8 @@ func (ums *UserMemStorage) GetUser(ctx context.Context, login string) (*user.Use
 	if !ok {
 		return nil, exceptions.NewUserNotFoundError()
 	}
-	userInDb := val.(user.User)
-	return &userInDb, nil
+	userInDB := val.(user.User)
+	return &userInDB, nil
 }
 
 func (*UserMemStorage) BeginTx(ctx context.Context) (*transaction.Trx, error) {
