@@ -19,39 +19,23 @@ type UserStorage interface {
 }
 
 type OrderStorage interface {
-	GetOrderUserId(ctx context.Context, orderId string) (*uuid.UUID, error)
-	InsertOrder(ctx context.Context, userId uuid.UUID, orderId string, trx *transaction.Trx) error
-	GetOrders(ctx context.Context, userId uuid.UUID) ([]order.Order, error)
+	GetOrderUserID(ctx context.Context, orderID string) (*uuid.UUID, error)
+	InsertOrder(ctx context.Context, userID uuid.UUID, orderID string, trx *transaction.Trx) error
+	GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
 	UpdateOrder(ctx context.Context, order *order.Order, trx *transaction.Trx) error
 	BeginTx(ctx context.Context) (*transaction.Trx, error)
 }
 
 type WithdrawalStorage interface {
-	GetWithdrawals(ctx context.Context, userId uuid.UUID) ([]withdrawal.Withdrawal, error)
-	GetWithdrawal(ctx context.Context, Id uuid.UUID) (*withdrawal.Withdrawal, error)
+	GetWithdrawals(ctx context.Context, userID uuid.UUID) ([]withdrawal.Withdrawal, error)
+	GetWithdrawal(ctx context.Context, ID uuid.UUID) (*withdrawal.Withdrawal, error)
 	InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error
 	BeginTx(ctx context.Context) (*transaction.Trx, error)
 }
 
 type BalanceStorage interface {
-	AddBalance(ctx context.Context, userId uuid.UUID, amount float64, trx *transaction.Trx) error
-	ReduceBalance(ctx context.Context, userId uuid.UUID, amount float64, trx *transaction.Trx) error
-	GetBalance(ctx context.Context, userId uuid.UUID) (*balance.Balance, error)
+	AddBalance(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error
+	ReduceBalance(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error
+	GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error)
 	BeginTx(ctx context.Context) (*transaction.Trx, error)
 }
-
-// type MoneyStorage interface {
-// 	BalanceStorage
-// 	WithdrawalStorage
-
-// 	BeginTx(ctx context.Context) (*transaction.Trx, error)
-// }
-
-// type Storage interface {
-// 	MoneyStorage
-// 	OrderStorage
-// 	UserStorage
-
-// 	Initialize(ctx context.Context) error
-// 	BeginTx(ctx context.Context) (*transaction.Trx, error)
-// }

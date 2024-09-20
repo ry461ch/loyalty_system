@@ -27,27 +27,27 @@ func (wms *WithdrawalMemStorage) InitializeWithdrawalMemStorage(ctx context.Cont
 }
 
 func (wms *WithdrawalMemStorage) InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
-	val, ok := wms.usersToWithdrawalsMap.Load(*inputWithdrawal.UserId)
+	val, ok := wms.usersToWithdrawalsMap.Load(*inputWithdrawal.UserID)
 	if !ok {
 		val = map[uuid.UUID]withdrawal.Withdrawal{}
 	}
 	userWithdrawals := val.(map[uuid.UUID]withdrawal.Withdrawal)
 
 	createdAt := time.Now()
-	userWithdrawals[*inputWithdrawal.Id] = withdrawal.Withdrawal{
+	userWithdrawals[*inputWithdrawal.ID] = withdrawal.Withdrawal{
 		CreatedAt: &createdAt,
-		Id:        inputWithdrawal.Id,
-		OrderId:   inputWithdrawal.OrderId,
+		ID:        inputWithdrawal.ID,
+		OrderID:   inputWithdrawal.OrderID,
 		Sum:       inputWithdrawal.Sum,
-		UserId:    inputWithdrawal.UserId,
+		UserID:    inputWithdrawal.UserID,
 	}
-	wms.usersToWithdrawalsMap.Store(*inputWithdrawal.UserId, userWithdrawals)
-	wms.withdrawalsToUsersMap.Store(*inputWithdrawal.Id, *inputWithdrawal.UserId)
+	wms.usersToWithdrawalsMap.Store(*inputWithdrawal.UserID, userWithdrawals)
+	wms.withdrawalsToUsersMap.Store(*inputWithdrawal.ID, *inputWithdrawal.UserID)
 	return nil
 }
 
-func (wms *WithdrawalMemStorage) GetWithdrawals(ctx context.Context, userId uuid.UUID) ([]withdrawal.Withdrawal, error) {
-	val, ok := wms.usersToWithdrawalsMap.Load(userId)
+func (wms *WithdrawalMemStorage) GetWithdrawals(ctx context.Context, userID uuid.UUID) ([]withdrawal.Withdrawal, error) {
+	val, ok := wms.usersToWithdrawalsMap.Load(userID)
 	if !ok {
 		val = map[uuid.UUID]withdrawal.Withdrawal{}
 	}
@@ -63,19 +63,19 @@ func (wms *WithdrawalMemStorage) GetWithdrawals(ctx context.Context, userId uuid
 	return resultWithdrawals, nil
 }
 
-func (wms *WithdrawalMemStorage) GetWithdrawal(ctx context.Context, Id uuid.UUID) (*withdrawal.Withdrawal, error) {
-	userVal, ok := wms.withdrawalsToUsersMap.Load(Id)
+func (wms *WithdrawalMemStorage) GetWithdrawal(ctx context.Context, ID uuid.UUID) (*withdrawal.Withdrawal, error) {
+	userVal, ok := wms.withdrawalsToUsersMap.Load(ID)
 	if !ok {
 		return nil, exceptions.NewWithdrawalNotFoundError()
 	}
-	userId := userVal.(uuid.UUID)
+	userID := userVal.(uuid.UUID)
 
-	withdrawalsVal, ok := wms.usersToWithdrawalsMap.Load(userId)
+	withdrawalsVal, ok := wms.usersToWithdrawalsMap.Load(userID)
 	if !ok {
 		withdrawalsVal = map[uuid.UUID]withdrawal.Withdrawal{}
 	}
 	userWithdrawals := withdrawalsVal.(map[uuid.UUID]withdrawal.Withdrawal)
-	withdrawalInDb := userWithdrawals[Id]
+	withdrawalInDb := userWithdrawals[ID]
 	return &withdrawalInDb, nil
 }
 

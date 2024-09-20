@@ -9,9 +9,9 @@ import (
 )
 
 type Withdrawal struct {
-	Id        *uuid.UUID `json:"-"`
-	UserId    *uuid.UUID `json:"-"`
-	OrderId   string     `json:"number"`
+	ID        *uuid.UUID `json:"-"`
+	UserID    *uuid.UUID `json:"-"`
+	OrderID   string     `json:"number"`
 	Sum       float64    `json:"sum"`
 	CreatedAt *time.Time `json:"processed_at"`
 }
@@ -21,7 +21,7 @@ func (w *Withdrawal) UnmarshalJSON(data []byte) error {
 
 	aliasValue := &struct {
 		*WithdrawalAlias
-		OrderId string `json:"order"`
+		OrderID string `json:"order"`
 	}{
 		WithdrawalAlias: (*WithdrawalAlias)(w),
 	}
@@ -33,11 +33,11 @@ func (w *Withdrawal) UnmarshalJSON(data []byte) error {
 	if aliasValue.Sum == 0 {
 		return exceptions.NewBalanceBadAmountFormatError()
 	}
-	if aliasValue.UserId != nil || aliasValue.Id != nil || aliasValue.CreatedAt != nil {
+	if aliasValue.UserID != nil || aliasValue.ID != nil || aliasValue.CreatedAt != nil {
 		return exceptions.NewWithdrawalBadFormatError()
 	}
 
-	w.OrderId = aliasValue.OrderId
+	w.OrderID = aliasValue.OrderID
 
 	return nil
 }

@@ -18,48 +18,48 @@ import (
 )
 
 func TestSaveOrder(t *testing.T) {
-	existingUserId := uuid.New()
-	existingOrderId := "1115"
+	existingUserID := uuid.New()
+	existingOrderID := "1115"
 
 	testCases := []struct {
 		testName             string
-		userId               uuid.UUID
-		orderId              string
+		userID               uuid.UUID
+		orderID              string
 		expectedSavingResult error
 		expectedOrdersNum    int
 	}{
 		{
 			testName:             "successfully saved with same user",
-			userId:               existingUserId,
-			orderId:              "1321",
+			userID:               existingUserID,
+			orderID:              "1321",
 			expectedSavingResult: nil,
 			expectedOrdersNum:    2,
 		},
 		{
 			testName:             "successfully saved with another user",
-			userId:               uuid.New(),
-			orderId:              "1321",
+			userID:               uuid.New(),
+			orderID:              "1321",
 			expectedSavingResult: nil,
 			expectedOrdersNum:    1,
 		},
 		{
 			testName:             "invalid order id",
-			userId:               uuid.New(),
-			orderId:              "1322a",
-			expectedSavingResult: exceptions.NewOrderBadIdFormatError(),
+			userID:               uuid.New(),
+			orderID:              "1322a",
+			expectedSavingResult: exceptions.NewOrderBadIDFormatError(),
 			expectedOrdersNum:    0,
 		},
 		{
 			testName:             "existing order id with another user",
-			userId:               uuid.New(),
-			orderId:              existingOrderId,
+			userID:               uuid.New(),
+			orderID:              existingOrderID,
 			expectedSavingResult: exceptions.NewOrderConflictAnotherUserError(),
 			expectedOrdersNum:    0,
 		},
 		{
 			testName:             "existing order id with same user",
-			userId:               existingUserId,
-			orderId:              existingOrderId,
+			userID:               existingUserID,
+			orderID:              existingOrderID,
 			expectedSavingResult: exceptions.NewOrderConflictSameUserError(),
 			expectedOrdersNum:    1,
 		},
@@ -68,24 +68,24 @@ func TestSaveOrder(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			orderStorage := ordermemstorage.NewOrderMemStorage()
-			orderStorage.InsertOrder(context.TODO(), existingUserId, existingOrderId, nil)
+			orderStorage.InsertOrder(context.TODO(), existingUserID, existingOrderID, nil)
 			balanceStorage := balancememstorage.NewBalanceMemStorage()
 			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
 			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 			orderService := NewOrderService(orderStorage, moneyService)
 
-			err := orderService.InsertOrder(context.TODO(), tc.userId, tc.orderId)
+			err := orderService.InsertOrder(context.TODO(), tc.userID, tc.orderID)
 			assert.ErrorIs(t, tc.expectedSavingResult, err, "exceptions don't match")
 
-			ordersInDb, _ := orderStorage.GetOrders(context.TODO(), tc.userId)
+			ordersInDb, _ := orderStorage.GetOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrdersNum, len(ordersInDb), "orders num don't match")
 		})
 	}
 }
 
 func TestUpdateOrder(t *testing.T) {
-	existingUserId := uuid.New()
-	existingOrderId := "1115"
+	existingUserID := uuid.New()
+	existingOrderID := "1115"
 	existingBalance := balance.Balance{
 		Current:   200,
 		Withdrawn: 200,
@@ -101,7 +101,7 @@ func TestUpdateOrder(t *testing.T) {
 		{
 			testName: "successfully updated with accrual",
 			inputOrder: order.Order{
-				Id:      existingOrderId,
+				ID:      existingOrderID,
 				Status:  order.PROCESSED,
 				Accrual: &accrual,
 			},
@@ -114,7 +114,7 @@ func TestUpdateOrder(t *testing.T) {
 		{
 			testName: "successfully updated without accrual",
 			inputOrder: order.Order{
-				Id:     existingOrderId,
+				ID:     existingOrderID,
 				Status: order.INVALID,
 			},
 			expectedSavingResult: nil,
@@ -123,7 +123,7 @@ func TestUpdateOrder(t *testing.T) {
 		{
 			testName: "order not found",
 			inputOrder: order.Order{
-				Id:      "1123",
+				ID:      "1123",
 				Status:  order.PROCESSED,
 				Accrual: &accrual,
 			},
@@ -137,22 +137,22 @@ func TestUpdateOrder(t *testing.T) {
 			orderStorage := ordermemstorage.NewOrderMemStorage()
 			balanceStorage := balancememstorage.NewBalanceMemStorage()
 			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
-			orderStorage.InsertOrder(context.TODO(), existingUserId, existingOrderId, nil)
-			balanceStorage.AddBalance(context.TODO(), existingUserId, existingBalance.Current+existingBalance.Withdrawn, nil)
-			balanceStorage.ReduceBalance(context.TODO(), existingUserId, existingBalance.Withdrawn, nil)
+			orderStorage.InsertOrder(context.TODO(), existingUserID, existingOrderID, nil)
+			balanceStorage.AddBalance(context.TODO(), existingUserID, existingBalance.Current+existingBalance.Withdrawn, nil)
+			balanceStorage.ReduceBalance(context.TODO(), existingUserID, existingBalance.Withdrawn, nil)
 			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 			orderService := NewOrderService(orderStorage, moneyService)
 
 			err := orderService.UpdateOrder(context.TODO(), &tc.inputOrder)
 			if tc.expectedSavingResult == nil {
 				assert.Nil(t, err, "not expected error")
-				ordersInDb, _ := orderStorage.GetOrders(context.TODO(), existingUserId)
+				ordersInDb, _ := orderStorage.GetOrders(context.TODO(), existingUserID)
 				assert.Equal(t, tc.inputOrder, ordersInDb[0], "orders not equal")
 			} else {
 				assert.ErrorIs(t, err, tc.expectedSavingResult, "exceptions don't match")
 			}
 
-			balanceInDb, _ := balanceStorage.GetBalance(context.TODO(), existingUserId)
+			balanceInDb, _ := balanceStorage.GetBalance(context.TODO(), existingUserID)
 			assert.Equal(t, tc.expectedBalance, *balanceInDb, "balances not equal")
 		})
 	}
@@ -160,34 +160,34 @@ func TestUpdateOrder(t *testing.T) {
 
 func TestGetOrders(t *testing.T) {
 	accrual := float64(500)
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingOrders := []order.Order{
 		{
 			Accrual:   &accrual,
 			Status:    order.PROCESSED,
-			Id:        "1115",
+			ID:        "1115",
 			CreatedAt: time.Now(),
 		},
 		{
 			Status:    order.NEW,
-			Id:        "1321",
+			ID:        "1321",
 			CreatedAt: time.Now(),
 		},
 	}
 
 	testCases := []struct {
 		testName       string
-		userId         uuid.UUID
+		userID         uuid.UUID
 		expectedOrders []order.Order
 	}{
 		{
 			testName:       "new user",
-			userId:         uuid.New(),
+			userID:         uuid.New(),
 			expectedOrders: []order.Order{},
 		},
 		{
 			testName:       "existing user",
-			userId:         existingUserId,
+			userID:         existingUserID,
 			expectedOrders: existingOrders,
 		},
 	}
@@ -196,7 +196,7 @@ func TestGetOrders(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			orderStorage := ordermemstorage.NewOrderMemStorage()
 			for _, newOrder := range existingOrders {
-				orderStorage.InsertOrder(context.TODO(), existingUserId, newOrder.Id, nil)
+				orderStorage.InsertOrder(context.TODO(), existingUserID, newOrder.ID, nil)
 				orderStorage.UpdateOrder(context.TODO(), &newOrder, nil)
 			}
 			balanceStorage := balancememstorage.NewBalanceMemStorage()
@@ -204,7 +204,7 @@ func TestGetOrders(t *testing.T) {
 			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 			orderService := NewOrderService(orderStorage, moneyService)
 
-			userOrders, _ := orderService.GetOrders(context.TODO(), tc.userId)
+			userOrders, _ := orderService.GetOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrders, userOrders, "orders are not equal")
 		})
 	}

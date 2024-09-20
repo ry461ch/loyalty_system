@@ -16,17 +16,17 @@ func NewOrderError() error {
 	}
 }
 
-type OrderBadIdFormatError struct {
+type OrderBadIDFormatError struct {
 	err     error
 	message string
 }
 
-func (obife OrderBadIdFormatError) Error() string {
+func (obife OrderBadIDFormatError) Error() string {
 	return fmt.Sprintf("%v: %s", obife.err, obife.message)
 }
 
-func NewOrderBadIdFormatError() error {
-	return OrderBadIdFormatError{
+func NewOrderBadIDFormatError() error {
+	return OrderBadIDFormatError{
 		err:     NewOrderError(),
 		message: "bad order id format",
 	}

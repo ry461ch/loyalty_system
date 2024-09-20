@@ -25,18 +25,18 @@ func NewOrderService(orderStorage storage.OrderStorage, moneyService services.Mo
 	}
 }
 
-func (os *OrderService) GetOrders(ctx context.Context, userId uuid.UUID) ([]order.Order, error) {
-	return os.orderStorage.GetOrders(ctx, userId)
+func (os *OrderService) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
+	return os.orderStorage.GetOrders(ctx, userID)
 }
 
-func (os *OrderService) InsertOrder(ctx context.Context, userId uuid.UUID, orderId string) error {
-	if !orderhelper.ValidateOrderId(orderId) {
-		return exceptions.NewOrderBadIdFormatError()
+func (os *OrderService) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error {
+	if !orderhelper.ValidateOrderID(orderID) {
+		return exceptions.NewOrderBadIDFormatError()
 	}
 
-	orderUserId, err := os.orderStorage.GetOrderUserId(ctx, orderId)
-	if orderUserId != nil {
-		if orderUserId.String() == userId.String() {
+	orderUserID, err := os.orderStorage.GetOrderUserID(ctx, orderID)
+	if orderUserID != nil {
+		if orderUserID.String() == userID.String() {
 			return exceptions.NewOrderConflictSameUserError()
 		}
 		return exceptions.NewOrderConflictAnotherUserError()
@@ -49,11 +49,11 @@ func (os *OrderService) InsertOrder(ctx context.Context, userId uuid.UUID, order
 	if err != nil {
 		return err
 	}
-	return os.orderStorage.InsertOrder(ctx, userId, orderId, tx)
+	return os.orderStorage.InsertOrder(ctx, userID, orderID, tx)
 }
 
 func (os *OrderService) UpdateOrder(ctx context.Context, updatedOrder *order.Order) error {
-	orderUserId, err := os.orderStorage.GetOrderUserId(ctx, updatedOrder.Id)
+	orderUserID, err := os.orderStorage.GetOrderUserID(ctx, updatedOrder.ID)
 	if err != nil {
 		return err
 	}
@@ -72,5 +72,5 @@ func (os *OrderService) UpdateOrder(ctx context.Context, updatedOrder *order.Ord
 		return nil
 	}
 
-	return os.moneyService.AddAccrual(ctx, *orderUserId, *updatedOrder.Accrual, tx)
+	return os.moneyService.AddAccrual(ctx, *orderUserID, *updatedOrder.Accrual, tx)
 }

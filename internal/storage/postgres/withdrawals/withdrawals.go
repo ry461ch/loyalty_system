@@ -70,18 +70,18 @@ func (wps *WithdrawalPGStorage) InsertWithdrawal(ctx context.Context, inputWithd
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO NOTHING;
 	`
-	_, err := trx.ExecContext(ctx, insertWithdrawalQuery, *inputWithdrawal.Id, inputWithdrawal.OrderId, *inputWithdrawal.UserId, inputWithdrawal.Sum)
+	_, err := trx.ExecContext(ctx, insertWithdrawalQuery, *inputWithdrawal.ID, inputWithdrawal.OrderID, *inputWithdrawal.UserID, inputWithdrawal.Sum)
 	return err
 }
 
-func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userId uuid.UUID) ([]withdrawal.Withdrawal, error) {
+func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userID uuid.UUID) ([]withdrawal.Withdrawal, error) {
 	getWithdrawalsFromDb := `
 		SELECT id, order_id, sum, created_at
 		FROM content.withdrawals
 		WHERE user_id = $1
 		ORDER BY created_at DESC;
 	`
-	rows, err := wps.db.QueryContext(ctx, getWithdrawalsFromDb, userId.String())
+	rows, err := wps.db.QueryContext(ctx, getWithdrawalsFromDb, userID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userId uuid.
 	withdrawals := []withdrawal.Withdrawal{}
 	for rows.Next() {
 		var insertedWithdrawal withdrawal.Withdrawal
-		err = rows.Scan(&insertedWithdrawal.Id, &insertedWithdrawal.OrderId, &insertedWithdrawal.Sum, &insertedWithdrawal.CreatedAt)
+		err = rows.Scan(&insertedWithdrawal.ID, &insertedWithdrawal.OrderID, &insertedWithdrawal.Sum, &insertedWithdrawal.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -105,23 +105,23 @@ func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userId uuid.
 	return withdrawals, nil
 }
 
-func (wps *WithdrawalPGStorage) GetWithdrawal(ctx context.Context, Id uuid.UUID) (*withdrawal.Withdrawal, error) {
+func (wps *WithdrawalPGStorage) GetWithdrawal(ctx context.Context, ID uuid.UUID) (*withdrawal.Withdrawal, error) {
 	getWithdrawalFromDb := `
 		SELECT order_id, sum, created_at
 		FROM content.withdrawals
 		WHERE id = $1;
 	`
-	row := wps.db.QueryRowContext(ctx, getWithdrawalFromDb, Id)
+	row := wps.db.QueryRowContext(ctx, getWithdrawalFromDb, ID)
 
 	var withdrawalInDb withdrawal.Withdrawal
-	err := row.Scan(&withdrawalInDb.OrderId, &withdrawalInDb.Sum, &withdrawalInDb.CreatedAt)
+	err := row.Scan(&withdrawalInDb.OrderID, &withdrawalInDb.Sum, &withdrawalInDb.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, exceptions.NewWithdrawalNotFoundError()
 		}
 		return nil, err
 	}
-	withdrawalInDb.Id = &Id
+	withdrawalInDb.ID = &ID
 	return &withdrawalInDb, nil
 }
 

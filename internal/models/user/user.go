@@ -35,14 +35,14 @@ func (u *InputUser) UnmarshalJSON(data []byte) error {
 }
 
 type User struct {
-	Id           uuid.UUID `json:"uid"`
+	ID           uuid.UUID `json:"uid"`
 	Login        string    `json:"login"`
 	PasswordHash []byte    `json:"-"`
 }
 
 func New(inputUser InputUser) *User {
 	return &User{
-		Id:           uuid.New(),
+		ID:           uuid.New(),
 		Login:        inputUser.Login,
 		PasswordHash: GeneratePasswordHash(inputUser.Password),
 	}

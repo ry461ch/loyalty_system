@@ -11,7 +11,7 @@ import (
 )
 
 func TestReduceBalance(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingBalance := balance.Balance{
 		Current:   500,
 		Withdrawn: 300,
@@ -19,13 +19,13 @@ func TestReduceBalance(t *testing.T) {
 
 	testCases := []struct {
 		testName        string
-		userId          uuid.UUID
+		userID          uuid.UUID
 		withdrawal      float64
 		expectedBalance balance.Balance
 	}{
 		{
 			testName:   "existing user",
-			userId:     existingUserId,
+			userID:     existingUserID,
 			withdrawal: 200,
 			expectedBalance: balance.Balance{
 				Current:   existingBalance.Current - 200,
@@ -34,7 +34,7 @@ func TestReduceBalance(t *testing.T) {
 		},
 		{
 			testName:   "new user",
-			userId:     uuid.New(),
+			userID:     uuid.New(),
 			withdrawal: 200,
 			expectedBalance: balance.Balance{
 				Current:   -200,
@@ -46,17 +46,17 @@ func TestReduceBalance(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewBalanceMemStorage()
-			storage.balances.Store(existingUserId, existingBalance)
+			storage.balances.Store(existingUserID, existingBalance)
 
-			storage.ReduceBalance(context.TODO(), tc.userId, tc.withdrawal, nil)
-			resultBalance, _ := storage.balances.Load(tc.userId)
+			storage.ReduceBalance(context.TODO(), tc.userID, tc.withdrawal, nil)
+			resultBalance, _ := storage.balances.Load(tc.userID)
 			assert.Equal(t, tc.expectedBalance, resultBalance, "balances don't match")
 		})
 	}
 }
 
 func TestAddBalance(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingBalance := balance.Balance{
 		Current:   500,
 		Withdrawn: 300,
@@ -64,13 +64,13 @@ func TestAddBalance(t *testing.T) {
 
 	testCases := []struct {
 		testName        string
-		userId          uuid.UUID
+		userID          uuid.UUID
 		withdrawal      float64
 		expectedBalance balance.Balance
 	}{
 		{
 			testName:   "existing user",
-			userId:     existingUserId,
+			userID:     existingUserID,
 			withdrawal: 200,
 			expectedBalance: balance.Balance{
 				Current:   existingBalance.Current + 200,
@@ -79,7 +79,7 @@ func TestAddBalance(t *testing.T) {
 		},
 		{
 			testName:   "new user",
-			userId:     uuid.New(),
+			userID:     uuid.New(),
 			withdrawal: 200,
 			expectedBalance: balance.Balance{
 				Current: 200,
@@ -90,17 +90,17 @@ func TestAddBalance(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewBalanceMemStorage()
-			storage.balances.Store(existingUserId, existingBalance)
+			storage.balances.Store(existingUserID, existingBalance)
 
-			storage.AddBalance(context.TODO(), tc.userId, tc.withdrawal, nil)
-			resultBalance, _ := storage.balances.Load(tc.userId)
+			storage.AddBalance(context.TODO(), tc.userID, tc.withdrawal, nil)
+			resultBalance, _ := storage.balances.Load(tc.userID)
 			assert.Equal(t, tc.expectedBalance, resultBalance, "balances don't match")
 		})
 	}
 }
 
 func TestGetBalance(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingBalance := balance.Balance{
 		Current:   500,
 		Withdrawn: 300,
@@ -108,12 +108,12 @@ func TestGetBalance(t *testing.T) {
 
 	testCases := []struct {
 		testName        string
-		userId          uuid.UUID
+		userID          uuid.UUID
 		expectedBalance balance.Balance
 	}{
 		{
 			testName: "existing user",
-			userId:   existingUserId,
+			userID:   existingUserID,
 			expectedBalance: balance.Balance{
 				Current:   existingBalance.Current,
 				Withdrawn: existingBalance.Withdrawn,
@@ -121,7 +121,7 @@ func TestGetBalance(t *testing.T) {
 		},
 		{
 			testName:        "new user",
-			userId:          uuid.New(),
+			userID:          uuid.New(),
 			expectedBalance: balance.Balance{},
 		},
 	}
@@ -129,9 +129,9 @@ func TestGetBalance(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewBalanceMemStorage()
-			storage.balances.Store(existingUserId, existingBalance)
+			storage.balances.Store(existingUserID, existingBalance)
 
-			resultBalance, _ := storage.GetBalance(context.TODO(), tc.userId)
+			resultBalance, _ := storage.GetBalance(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedBalance, *resultBalance, "balances don't match")
 		})
 	}

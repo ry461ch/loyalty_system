@@ -20,7 +20,7 @@ func TestUnmarshal(t *testing.T) {
 				"sum": 500
 			}`,
 			expectedWithdrawal: Withdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     500,
 			},
 		},
@@ -31,7 +31,7 @@ func TestUnmarshal(t *testing.T) {
 			var withdrawal Withdrawal
 			err := json.Unmarshal([]byte(tc.inputWithdrawal), &withdrawal)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.expectedWithdrawal.OrderId, withdrawal.OrderId, "order id not equal")
+			assert.Equal(t, tc.expectedWithdrawal.OrderID, withdrawal.OrderID, "order id not equal")
 			assert.Equal(t, tc.expectedWithdrawal.Sum, withdrawal.Sum, "Sum not equal")
 		})
 	}

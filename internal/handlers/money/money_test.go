@@ -29,17 +29,17 @@ func mockRouter(moneyHandlers *MoneyHandlers) chi.Router {
 }
 
 func TestGetBalance(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingBalance := balance.Balance{
 		Current:   200,
 		Withdrawn: 300,
 	}
-	existingWithdrawalId := uuid.New()
+	existingWithdrawalID := uuid.New()
 	createdAt := time.Now()
 	existingWithdrawal := withdrawal.Withdrawal{
-		Id:        &existingWithdrawalId,
-		OrderId:   "1115",
-		UserId:    &existingUserId,
+		ID:        &existingWithdrawalID,
+		OrderID:   "1115",
+		UserID:    &existingUserID,
 		Sum:       existingBalance.Withdrawn,
 		CreatedAt: &createdAt,
 	}
@@ -55,19 +55,19 @@ func TestGetBalance(t *testing.T) {
 
 	testCases := []struct {
 		testName        string
-		inputUserId     uuid.UUID
+		inputUserID     uuid.UUID
 		expectedBalance balance.Balance
 		expectedCode    int
 	}{
 		{
 			testName:        "successful get balance of existing user",
-			inputUserId:     existingUserId,
+			inputUserID:     existingUserID,
 			expectedBalance: existingBalance,
 			expectedCode:    http.StatusOK,
 		},
 		{
 			testName:        "successful get balance of new user",
-			inputUserId:     uuid.New(),
+			inputUserID:     uuid.New(),
 			expectedBalance: balance.Balance{},
 			expectedCode:    http.StatusOK,
 		},
@@ -75,12 +75,12 @@ func TestGetBalance(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			moneyService.AddAccrual(context.TODO(), existingUserId, existingBalance.Current+existingBalance.Withdrawn, nil)
+			moneyService.AddAccrual(context.TODO(), existingUserID, existingBalance.Current+existingBalance.Withdrawn, nil)
 			moneyService.Withdraw(context.TODO(), &existingWithdrawal)
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
-				SetHeader("X-User-Id", tc.inputUserId.String()).
+				SetHeader("X-User-Id", tc.inputUserID.String()).
 				Execute(http.MethodGet, srv.URL+"/api/user/balance")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 
@@ -92,25 +92,25 @@ func TestGetBalance(t *testing.T) {
 }
 
 type outputWithdrawal struct {
-	OrderId     string    `json:"order"`
+	OrderID     string    `json:"order"`
 	Sum         float64   `json:"sum"`
 	ProcessedAt time.Time `json:"processed_at"`
 }
 
 func TestGetWithdrawals(t *testing.T) {
-	existingUserId := uuid.New()
-	existingWithdrawalId1 := uuid.New()
-	existingWithdrawalId2 := uuid.New()
+	existingUserID := uuid.New()
+	existingWithdrawalID1 := uuid.New()
+	existingWithdrawalID2 := uuid.New()
 	existingWithdrawal1 := withdrawal.Withdrawal{
-		Id:      &existingWithdrawalId1,
-		OrderId: "1115",
-		UserId:  &existingUserId,
+		ID:      &existingWithdrawalID1,
+		OrderID: "1115",
+		UserID:  &existingUserID,
 		Sum:     300,
 	}
 	existingWithdrawal2 := withdrawal.Withdrawal{
-		Id:      &existingWithdrawalId2,
-		UserId:  &existingUserId,
-		OrderId: "1321",
+		ID:      &existingWithdrawalID2,
+		UserID:  &existingUserID,
+		OrderID: "1321",
 		Sum:     200,
 	}
 
@@ -125,19 +125,19 @@ func TestGetWithdrawals(t *testing.T) {
 
 	testCases := []struct {
 		testName               string
-		inputUserId            uuid.UUID
+		inputUserID            uuid.UUID
 		expectedWithdrawalsNum int
 		expectedCode           int
 	}{
 		{
 			testName:               "successful get withdrawals of existing user",
-			inputUserId:            existingUserId,
+			inputUserID:            existingUserID,
 			expectedWithdrawalsNum: 2,
 			expectedCode:           http.StatusOK,
 		},
 		{
 			testName:               "successful get withdrawals of new user",
-			inputUserId:            uuid.New(),
+			inputUserID:            uuid.New(),
 			expectedWithdrawalsNum: 0,
 			expectedCode:           http.StatusNoContent,
 		},
@@ -145,7 +145,7 @@ func TestGetWithdrawals(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			moneyService.AddAccrual(context.TODO(), existingUserId, existingWithdrawal1.Sum+existingWithdrawal2.Sum, nil)
+			moneyService.AddAccrual(context.TODO(), existingUserID, existingWithdrawal1.Sum+existingWithdrawal2.Sum, nil)
 			err := moneyService.Withdraw(context.TODO(), &existingWithdrawal1)
 			assert.Nil(t, err)
 			err = moneyService.Withdraw(context.TODO(), &existingWithdrawal2)
@@ -153,7 +153,7 @@ func TestGetWithdrawals(t *testing.T) {
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
-				SetHeader("X-User-Id", tc.inputUserId.String()).
+				SetHeader("X-User-Id", tc.inputUserID.String()).
 				Execute(http.MethodGet, srv.URL+"/api/user/withdrawals")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 
@@ -167,18 +167,18 @@ func TestGetWithdrawals(t *testing.T) {
 }
 
 type InputWithdrawal struct {
-	OrderId string  `json:"order"`
+	OrderID string  `json:"order"`
 	Sum     float64 `json:"sum"`
 }
 
 func TestPostWithdraw(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingBalanceCurrent := float64(200)
-	existingWithdrawalId := uuid.New()
+	existingWithdrawalID := uuid.New()
 	existingWithdrawal := withdrawal.Withdrawal{
-		Id:      &existingWithdrawalId,
-		OrderId: "1115",
-		UserId:  &existingUserId,
+		ID:      &existingWithdrawalID,
+		OrderID: "1115",
+		UserID:  &existingUserID,
 		Sum:     300,
 	}
 
@@ -193,7 +193,7 @@ func TestPostWithdraw(t *testing.T) {
 			testName:              "successful withdraw of existing user",
 			inputIdempotencyToken: uuid.NewString(),
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     existingBalanceCurrent - 100,
 			},
 			expectedWithdrawalsNum: 2,
@@ -210,7 +210,7 @@ func TestPostWithdraw(t *testing.T) {
 			testName:              "invalid withdrawal sum",
 			inputIdempotencyToken: uuid.NewString(),
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     0,
 			},
 			expectedWithdrawalsNum: 1,
@@ -220,7 +220,7 @@ func TestPostWithdraw(t *testing.T) {
 			testName:              "not enough money on balance",
 			inputIdempotencyToken: uuid.NewString(),
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     existingBalanceCurrent + 100,
 			},
 			expectedWithdrawalsNum: 1,
@@ -230,7 +230,7 @@ func TestPostWithdraw(t *testing.T) {
 			testName:              "invalid order id format",
 			inputIdempotencyToken: uuid.NewString(),
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1322",
+				OrderID: "1322",
 				Sum:     existingBalanceCurrent - 100,
 			},
 			expectedWithdrawalsNum: 1,
@@ -238,9 +238,9 @@ func TestPostWithdraw(t *testing.T) {
 		},
 		{
 			testName:              "existing idempotency token",
-			inputIdempotencyToken: existingWithdrawal.Id.String(),
+			inputIdempotencyToken: existingWithdrawal.ID.String(),
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     existingBalanceCurrent - 100,
 			},
 			expectedWithdrawalsNum: 1,
@@ -250,7 +250,7 @@ func TestPostWithdraw(t *testing.T) {
 			testName:              "invalid idempotency token",
 			inputIdempotencyToken: "invalid",
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     existingBalanceCurrent - 100,
 			},
 			expectedWithdrawalsNum: 1,
@@ -260,7 +260,7 @@ func TestPostWithdraw(t *testing.T) {
 			testName:              "empty idempotency token",
 			inputIdempotencyToken: "",
 			inputWithdrawal: &InputWithdrawal{
-				OrderId: "1321",
+				OrderID: "1321",
 				Sum:     existingBalanceCurrent - 100,
 			},
 			expectedWithdrawalsNum: 2,
@@ -279,7 +279,7 @@ func TestPostWithdraw(t *testing.T) {
 			defer srv.Close()
 			client := resty.New()
 
-			moneyService.AddAccrual(context.TODO(), existingUserId, existingBalanceCurrent+existingWithdrawal.Sum, nil)
+			moneyService.AddAccrual(context.TODO(), existingUserID, existingBalanceCurrent+existingWithdrawal.Sum, nil)
 			moneyService.Withdraw(context.TODO(), &existingWithdrawal)
 
 			var req []byte
@@ -291,13 +291,13 @@ func TestPostWithdraw(t *testing.T) {
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
-				SetHeader("X-User-Id", existingUserId.String()).
+				SetHeader("X-User-Id", existingUserID.String()).
 				SetHeader("Idempotency-Key", tc.inputIdempotencyToken).
 				SetBody(req).
 				Execute(http.MethodPost, srv.URL+"/api/user/balance/withdraw")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 
-			userWithdrawals, _ := moneyService.GetWithdrawals(context.TODO(), existingUserId)
+			userWithdrawals, _ := moneyService.GetWithdrawals(context.TODO(), existingUserID)
 			assert.Equal(t, tc.expectedWithdrawalsNum, len(userWithdrawals), "num of withdrawals don't match")
 		})
 	}

@@ -24,18 +24,18 @@ func NewMoneyHandlers(moneyService services.MoneyService) *MoneyHandlers {
 }
 
 func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Request) {
-	userId, err := uuid.Parse(req.Header.Get("X-User-Id"))
+	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	var withdrawalId uuid.UUID
-	withdrawalIdStr := req.Header.Get("Idempotency-Key")
-	if withdrawalIdStr == "" {
-		withdrawalId = uuid.New()
+	var withdrawalID uuid.UUID
+	withdrawalIDStr := req.Header.Get("Idempotency-Key")
+	if withdrawalIDStr == "" {
+		withdrawalID = uuid.New()
 	} else {
-		withdrawalId, err = uuid.Parse(withdrawalIdStr)
+		withdrawalID, err = uuid.Parse(withdrawalIDStr)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			return
@@ -54,8 +54,8 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	inputWithdrawal.Id = &withdrawalId
-	inputWithdrawal.UserId = &userId
+	inputWithdrawal.ID = &withdrawalID
+	inputWithdrawal.UserID = &userID
 
 	err = mh.moneyService.Withdraw(req.Context(), &inputWithdrawal)
 	if err != nil {
@@ -63,7 +63,7 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 		case errors.Is(err, exceptions.NewBalanceNotEnoughBalanceError()):
 			res.WriteHeader(http.StatusPaymentRequired)
 			return
-		case errors.Is(err, exceptions.NewOrderBadIdFormatError()):
+		case errors.Is(err, exceptions.NewOrderBadIDFormatError()):
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		default:
@@ -75,13 +75,13 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 }
 
 func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Request) {
-	userId, err := uuid.Parse(req.Header.Get("X-User-Id"))
+	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	userWithdrawals, err := mh.moneyService.GetWithdrawals(req.Context(), userId)
+	userWithdrawals, err := mh.moneyService.GetWithdrawals(req.Context(), userID)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -103,13 +103,13 @@ func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Reque
 }
 
 func (mh *MoneyHandlers) GetBalance(res http.ResponseWriter, req *http.Request) {
-	userId, err := uuid.Parse(req.Header.Get("X-User-Id"))
+	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	userBalance, err := mh.moneyService.GetBalance(req.Context(), userId)
+	userBalance, err := mh.moneyService.GetBalance(req.Context(), userID)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

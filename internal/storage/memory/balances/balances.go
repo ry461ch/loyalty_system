@@ -22,8 +22,8 @@ func (bms *BalanceMemStorage) InitializeBalanceMemStorage(ctx context.Context) e
 	return nil
 }
 
-func (bms *BalanceMemStorage) GetBalance(ctx context.Context, userId uuid.UUID) (*balance.Balance, error) {
-	val, ok := bms.balances.Load(userId)
+func (bms *BalanceMemStorage) GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error) {
+	val, ok := bms.balances.Load(userID)
 	if !ok {
 		val = balance.Balance{}
 	}
@@ -31,26 +31,26 @@ func (bms *BalanceMemStorage) GetBalance(ctx context.Context, userId uuid.UUID) 
 	return &userBalance, nil
 }
 
-func (bms *BalanceMemStorage) ReduceBalance(ctx context.Context, userId uuid.UUID, amount float64, trx *transaction.Trx) error {
-	val, ok := bms.balances.Load(userId)
+func (bms *BalanceMemStorage) ReduceBalance(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error {
+	val, ok := bms.balances.Load(userID)
 	if !ok {
 		val = balance.Balance{}
 	}
 	userBalance := val.(balance.Balance)
 	userBalance.Current -= amount
 	userBalance.Withdrawn += amount
-	bms.balances.Store(userId, userBalance)
+	bms.balances.Store(userID, userBalance)
 	return nil
 }
 
-func (bms *BalanceMemStorage) AddBalance(ctx context.Context, userId uuid.UUID, amount float64, trx *transaction.Trx) error {
-	val, ok := bms.balances.Load(userId)
+func (bms *BalanceMemStorage) AddBalance(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error {
+	val, ok := bms.balances.Load(userID)
 	if !ok {
 		val = balance.Balance{}
 	}
 	userBalance := val.(balance.Balance)
 	userBalance.Current += amount
-	bms.balances.Store(userId, userBalance)
+	bms.balances.Store(userID, userBalance)
 	return nil
 }
 

@@ -13,17 +13,17 @@ import (
 )
 
 func TestInsertWithdrawal(t *testing.T) {
-	existingUserId := uuid.New()
-	existingWithdrawalId := uuid.New()
+	existingUserID := uuid.New()
+	existingWithdrawalID := uuid.New()
 	createdAt, _ := time.Parse(time.RFC3339, "2020-12-09T16:09:53Z")
 	existingWithdrawal := withdrawal.Withdrawal{
-		Id:        &existingWithdrawalId,
-		OrderId:   "1115",
+		ID:        &existingWithdrawalID,
+		OrderID:   "1115",
 		Sum:       500,
 		CreatedAt: &createdAt,
 	}
-	newWithdrawalId := uuid.New()
-	newUserId := uuid.New()
+	newWithdrawalID := uuid.New()
+	newUserID := uuid.New()
 
 	testCases := []struct {
 		testName               string
@@ -33,9 +33,9 @@ func TestInsertWithdrawal(t *testing.T) {
 		{
 			testName: "existing userId",
 			inputWithdrawal: withdrawal.Withdrawal{
-				Id:      &newWithdrawalId,
-				UserId:  &existingUserId,
-				OrderId: "1313",
+				ID:      &newWithdrawalID,
+				UserID:  &existingUserID,
+				OrderID: "1313",
 				Sum:     400,
 			},
 			expectedWithdrawalsNum: 2,
@@ -43,9 +43,9 @@ func TestInsertWithdrawal(t *testing.T) {
 		{
 			testName: "new userId",
 			inputWithdrawal: withdrawal.Withdrawal{
-				Id:      &newWithdrawalId,
-				UserId:  &newUserId,
-				OrderId: "1313",
+				ID:      &newWithdrawalID,
+				UserID:  &newUserID,
+				OrderID: "1313",
 				Sum:     400,
 			},
 			expectedWithdrawalsNum: 1,
@@ -53,9 +53,9 @@ func TestInsertWithdrawal(t *testing.T) {
 		{
 			testName: "existing withdrawal",
 			inputWithdrawal: withdrawal.Withdrawal{
-				Id:      &existingWithdrawalId,
-				UserId:  &existingUserId,
-				OrderId: "1313",
+				ID:      &existingWithdrawalID,
+				UserID:  &existingUserID,
+				OrderID: "1313",
 				Sum:     400,
 			},
 			expectedWithdrawalsNum: 1,
@@ -65,55 +65,55 @@ func TestInsertWithdrawal(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewWithdrawalMemStorage()
-			storage.usersToWithdrawalsMap.Store(existingUserId, map[uuid.UUID]withdrawal.Withdrawal{existingWithdrawalId: existingWithdrawal})
-			storage.withdrawalsToUsersMap.Store(*existingWithdrawal.Id, existingUserId)
+			storage.usersToWithdrawalsMap.Store(existingUserID, map[uuid.UUID]withdrawal.Withdrawal{existingWithdrawalID: existingWithdrawal})
+			storage.withdrawalsToUsersMap.Store(*existingWithdrawal.ID, existingUserID)
 
 			storage.InsertWithdrawal(context.TODO(), &tc.inputWithdrawal, nil)
-			userWithdrawals, _ := storage.usersToWithdrawalsMap.Load(*tc.inputWithdrawal.UserId)
+			userWithdrawals, _ := storage.usersToWithdrawalsMap.Load(*tc.inputWithdrawal.UserID)
 			assert.Equal(t, tc.expectedWithdrawalsNum, len(userWithdrawals.(map[uuid.UUID]withdrawal.Withdrawal)), "num of withdrawals doesn't match")
 		})
 	}
 }
 
 func TestGetWithdrawals(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	createdAt1, _ := time.Parse(time.RFC3339, "2020-12-09T16:09:53Z")
 	createdAt2, _ := time.Parse(time.RFC3339, "2020-12-10T16:09:53Z")
-	existingWithdrawalId1 := uuid.New()
-	existingWithdrawalId2 := uuid.New()
+	existingWithdrawalID1 := uuid.New()
+	existingWithdrawalID2 := uuid.New()
 	existingWithdrawal1 := withdrawal.Withdrawal{
-		Id:        &existingWithdrawalId1,
-		OrderId:   "1115",
+		ID:        &existingWithdrawalID1,
+		OrderID:   "1115",
 		Sum:       500,
 		CreatedAt: &createdAt1,
 	}
 	existingWithdrawal2 := withdrawal.Withdrawal{
-		Id:        &existingWithdrawalId2,
-		OrderId:   "1313",
+		ID:        &existingWithdrawalID2,
+		OrderID:   "1313",
 		Sum:       400,
 		CreatedAt: &createdAt2,
 	}
 	existingWithdrawals := map[uuid.UUID]withdrawal.Withdrawal{
-		existingWithdrawalId1: existingWithdrawal1,
-		existingWithdrawalId2: existingWithdrawal2,
+		existingWithdrawalID1: existingWithdrawal1,
+		existingWithdrawalID2: existingWithdrawal2,
 	}
 
 	testCases := []struct {
 		testName            string
-		userId              uuid.UUID
+		userID              uuid.UUID
 		expectedWithdrawals []withdrawal.Withdrawal
 	}{
 		{
-			testName: "existing userId",
-			userId:   existingUserId,
+			testName: "existing user id",
+			userID:   existingUserID,
 			expectedWithdrawals: []withdrawal.Withdrawal{
 				existingWithdrawal2,
 				existingWithdrawal1,
 			},
 		},
 		{
-			testName:            "new userId",
-			userId:              uuid.New(),
+			testName:            "new user id",
+			userID:              uuid.New(),
 			expectedWithdrawals: []withdrawal.Withdrawal{},
 		},
 	}
@@ -121,40 +121,40 @@ func TestGetWithdrawals(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewWithdrawalMemStorage()
-			storage.usersToWithdrawalsMap.Store(existingUserId, existingWithdrawals)
-			storage.withdrawalsToUsersMap.Store(*existingWithdrawal1.Id, existingUserId)
-			storage.withdrawalsToUsersMap.Store(*existingWithdrawal2.Id, existingUserId)
+			storage.usersToWithdrawalsMap.Store(existingUserID, existingWithdrawals)
+			storage.withdrawalsToUsersMap.Store(*existingWithdrawal1.ID, existingUserID)
+			storage.withdrawalsToUsersMap.Store(*existingWithdrawal2.ID, existingUserID)
 
-			userWithdrawals, _ := storage.GetWithdrawals(context.TODO(), tc.userId)
+			userWithdrawals, _ := storage.GetWithdrawals(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedWithdrawals, userWithdrawals, "withdrawals don't match")
 		})
 	}
 }
 
 func TestGetWithdrawal(t *testing.T) {
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	createdAt, _ := time.Parse(time.RFC3339, "2020-12-09T16:09:53Z")
-	existingWithdrawalId := uuid.New()
+	existingWithdrawalID := uuid.New()
 	existingWithdrawal := withdrawal.Withdrawal{
-		Id:        &existingWithdrawalId,
-		OrderId:   "1115",
+		ID:        &existingWithdrawalID,
+		OrderID:   "1115",
 		Sum:       500,
 		CreatedAt: &createdAt,
 	}
 
 	testCases := []struct {
 		testName     string
-		withdrawalId uuid.UUID
+		withdrawalID uuid.UUID
 		expectedErr  error
 	}{
 		{
 			testName:     "existing withdrawalId",
-			withdrawalId: existingWithdrawalId,
+			withdrawalID: existingWithdrawalID,
 			expectedErr:  nil,
 		},
 		{
 			testName:     "new withdrawalId",
-			withdrawalId: uuid.New(),
+			withdrawalID: uuid.New(),
 			expectedErr:  exceptions.NewWithdrawalNotFoundError(),
 		},
 	}
@@ -162,10 +162,10 @@ func TestGetWithdrawal(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewWithdrawalMemStorage()
-			storage.usersToWithdrawalsMap.Store(existingUserId, map[uuid.UUID]withdrawal.Withdrawal{*existingWithdrawal.Id: existingWithdrawal})
-			storage.withdrawalsToUsersMap.Store(*existingWithdrawal.Id, existingUserId)
+			storage.usersToWithdrawalsMap.Store(existingUserID, map[uuid.UUID]withdrawal.Withdrawal{*existingWithdrawal.ID: existingWithdrawal})
+			storage.withdrawalsToUsersMap.Store(*existingWithdrawal.ID, existingUserID)
 
-			userWithdrawal, err := storage.GetWithdrawal(context.TODO(), tc.withdrawalId)
+			userWithdrawal, err := storage.GetWithdrawal(context.TODO(), tc.withdrawalID)
 			if tc.expectedErr != nil {
 				assert.ErrorIs(t, err, exceptions.NewWithdrawalNotFoundError(), "errors don't match")
 			} else {

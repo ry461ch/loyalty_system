@@ -69,7 +69,7 @@ func (ups *UserPGStorage) GetUser(ctx context.Context, login string) (*user.User
 	row := ups.db.QueryRowContext(ctx, getUserFromDb, login)
 
 	var userInDB user.User
-	err := row.Scan(&userInDB.Id, &userInDB.Login, &userInDB.PasswordHash)
+	err := row.Scan(&userInDB.ID, &userInDB.Login, &userInDB.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, exceptions.NewUserNotFoundError()
@@ -83,7 +83,7 @@ func (ups *UserPGStorage) InsertUser(ctx context.Context, newUser *user.User, tr
 	insertUserQuery := `
 		INSERT INTO content.users (id, login, pass_hash) VALUES ($1, $2, $3);
 	`
-	_, err := trx.ExecContext(ctx, insertUserQuery, newUser.Id, newUser.Login, newUser.PasswordHash)
+	_, err := trx.ExecContext(ctx, insertUserQuery, newUser.ID, newUser.Login, newUser.PasswordHash)
 	return err
 }
 

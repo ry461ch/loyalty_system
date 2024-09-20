@@ -36,7 +36,7 @@ func (us *UserService) Register(ctx context.Context, inputUser *user.InputUser) 
 	newUser := user.User{
 		Login:        inputUser.Login,
 		PasswordHash: user.GeneratePasswordHash(inputUser.Password),
-		Id:           uuid.New(),
+		ID:           uuid.New(),
 	}
 
 	tx, err := us.userStorage.BeginTx(ctx)
@@ -48,7 +48,7 @@ func (us *UserService) Register(ctx context.Context, inputUser *user.InputUser) 
 	if err != nil {
 		return nil, err
 	}
-	return us.authenticator.MakeJWT(newUser.Id, newUser.Login)
+	return us.authenticator.MakeJWT(newUser.ID, newUser.Login)
 }
 
 func (us *UserService) Login(ctx context.Context, inputUser *user.InputUser) (*string, error) {
@@ -64,5 +64,5 @@ func (us *UserService) Login(ctx context.Context, inputUser *user.InputUser) (*s
 		return nil, exceptions.NewUserAuthenticationError()
 	}
 
-	return us.authenticator.MakeJWT(userInDB.Id, userInDB.Login)
+	return us.authenticator.MakeJWT(userInDB.ID, userInDB.Login)
 }

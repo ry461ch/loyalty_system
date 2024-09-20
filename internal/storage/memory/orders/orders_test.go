@@ -14,9 +14,9 @@ import (
 
 func TestInsertOrder(t *testing.T) {
 	accrual := float64(500)
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingOrder := order.Order{
-		Id:        "1115",
+		ID:        "1115",
 		Status:    order.PROCESSED,
 		CreatedAt: time.Now().UTC(),
 		Accrual:   &accrual,
@@ -24,20 +24,20 @@ func TestInsertOrder(t *testing.T) {
 
 	testCases := []struct {
 		testName          string
-		userId            uuid.UUID
-		orderId           string
+		userID            uuid.UUID
+		orderID           string
 		expectedOrdersNum int
 	}{
 		{
 			testName:          "existing user",
-			userId:            existingUserId,
-			orderId:           "1321",
+			userID:            existingUserID,
+			orderID:           "1321",
 			expectedOrdersNum: 2,
 		},
 		{
 			testName:          "new user",
-			userId:            uuid.New(),
-			orderId:           "1321",
+			userID:            uuid.New(),
+			orderID:           "1321",
 			expectedOrdersNum: 1,
 		},
 	}
@@ -45,27 +45,27 @@ func TestInsertOrder(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewOrderMemStorage()
-			storage.ordersToUsersMap.Store(existingOrder.Id, existingUserId)
+			storage.ordersToUsersMap.Store(existingOrder.ID, existingUserID)
 			storage.usersToOrdersMap.Store(
-				existingUserId,
+				existingUserID,
 				map[string]order.Order{
-					existingOrder.Id: existingOrder,
+					existingOrder.ID: existingOrder,
 				},
 			)
 
-			storage.InsertOrder(context.TODO(), tc.userId, tc.orderId, nil)
-			val, _ := storage.usersToOrdersMap.Load(tc.userId)
+			storage.InsertOrder(context.TODO(), tc.userID, tc.orderID, nil)
+			val, _ := storage.usersToOrdersMap.Load(tc.userID)
 			userOrders := val.(map[string]order.Order)
 			assert.Equal(t, tc.expectedOrdersNum, len(userOrders), "num of orders doesn't match")
 		})
 	}
 }
 
-func TestGetUserId(t *testing.T) {
+func TestGetUserID(t *testing.T) {
 	accrual := float64(500)
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingOrder := order.Order{
-		Id:        "1115",
+		ID:        "1115",
 		Status:    order.PROCESSED,
 		CreatedAt: time.Now().UTC(),
 		Accrual:   &accrual,
@@ -73,35 +73,35 @@ func TestGetUserId(t *testing.T) {
 
 	testCases := []struct {
 		testName       string
-		orderId        string
-		expectedUserId *uuid.UUID
+		orderID        string
+		expectedUserID *uuid.UUID
 	}{
 		{
 			testName:       "existing order",
-			orderId:        "1115",
-			expectedUserId: &existingUserId,
+			orderID:        "1115",
+			expectedUserID: &existingUserID,
 		},
 		{
 			testName:       "new order",
-			orderId:        "1321",
-			expectedUserId: nil,
+			orderID:        "1321",
+			expectedUserID: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewOrderMemStorage()
-			storage.ordersToUsersMap.Store(existingOrder.Id, existingUserId)
+			storage.ordersToUsersMap.Store(existingOrder.ID, existingUserID)
 			storage.usersToOrdersMap.Store(
-				existingUserId,
+				existingUserID,
 				map[string]order.Order{
-					existingOrder.Id: existingOrder,
+					existingOrder.ID: existingOrder,
 				},
 			)
 
-			userId, err := storage.GetOrderUserId(context.TODO(), tc.orderId)
-			if tc.expectedUserId != nil {
-				assert.Equal(t, *tc.expectedUserId, *userId, "users don't match")
+			userID, err := storage.GetOrderUserID(context.TODO(), tc.orderID)
+			if tc.expectedUserID != nil {
+				assert.Equal(t, *tc.expectedUserID, *userID, "users don't match")
 			} else {
 				assert.ErrorIs(t, err, exceptions.NewOrderNotFoundError(), "order found but shoildn't")
 			}
@@ -111,16 +111,16 @@ func TestGetUserId(t *testing.T) {
 
 func TestGetOrders(t *testing.T) {
 	accrual := float64(500)
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingOrders := map[string]order.Order{
 		"1115": {
-			Id:        "1115",
+			ID:        "1115",
 			Status:    order.PROCESSED,
 			CreatedAt: time.Now().UTC(),
 			Accrual:   &accrual,
 		},
 		"1321": {
-			Id:        "1321",
+			ID:        "1321",
 			Status:    order.INVALID,
 			CreatedAt: time.Now().UTC(),
 		},
@@ -128,17 +128,17 @@ func TestGetOrders(t *testing.T) {
 
 	testCases := []struct {
 		testName          string
-		userId            uuid.UUID
+		userID            uuid.UUID
 		expectedOrdersNum int
 	}{
 		{
 			testName:          "existing user",
-			userId:            existingUserId,
+			userID:            existingUserID,
 			expectedOrdersNum: 2,
 		},
 		{
 			testName:          "new user",
-			userId:            uuid.New(),
+			userID:            uuid.New(),
 			expectedOrdersNum: 0,
 		},
 	}
@@ -146,12 +146,12 @@ func TestGetOrders(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewOrderMemStorage()
-			for existingOrderId := range existingOrders {
-				storage.ordersToUsersMap.Store(existingOrderId, existingUserId)
+			for existingOrderID := range existingOrders {
+				storage.ordersToUsersMap.Store(existingOrderID, existingUserID)
 			}
-			storage.usersToOrdersMap.Store(existingUserId, existingOrders)
+			storage.usersToOrdersMap.Store(existingUserID, existingOrders)
 
-			userOrders, _ := storage.GetOrders(context.TODO(), tc.userId)
+			userOrders, _ := storage.GetOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrdersNum, len(userOrders), "num of orders not equal")
 		})
 	}
@@ -160,9 +160,9 @@ func TestGetOrders(t *testing.T) {
 func TestUpdateOrder(t *testing.T) {
 	accrual := float64(500)
 	createdAt, _ := time.Parse(time.RFC3339, "2020-12-09T16:09:53Z")
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingOrder := order.Order{
-		Id:        "1115",
+		ID:        "1115",
 		Status:    order.PROCESSING,
 		CreatedAt: createdAt,
 	}
@@ -175,7 +175,7 @@ func TestUpdateOrder(t *testing.T) {
 		{
 			testName: "existing order",
 			newOrder: order.Order{
-				Id:        existingOrder.Id,
+				ID:        existingOrder.ID,
 				Status:    order.PROCESSED,
 				Accrual:   &accrual,
 				CreatedAt: createdAt,
@@ -185,7 +185,7 @@ func TestUpdateOrder(t *testing.T) {
 		{
 			testName: "not existing order",
 			newOrder: order.Order{
-				Id:        "1321",
+				ID:        "1321",
 				Status:    order.PROCESSED,
 				Accrual:   &accrual,
 				CreatedAt: createdAt,
@@ -197,22 +197,22 @@ func TestUpdateOrder(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewOrderMemStorage()
-			storage.ordersToUsersMap.Store(existingOrder.Id, existingUserId)
+			storage.ordersToUsersMap.Store(existingOrder.ID, existingUserID)
 			storage.usersToOrdersMap.Store(
-				existingUserId,
+				existingUserID,
 				map[string]order.Order{
-					existingOrder.Id: existingOrder,
+					existingOrder.ID: existingOrder,
 				},
 			)
 
 			err := storage.UpdateOrder(context.TODO(), &tc.newOrder, nil)
 			assert.ErrorIs(t, tc.expectedErr, err, "errors don't match")
-			val, _ := storage.usersToOrdersMap.Load(existingUserId)
+			val, _ := storage.usersToOrdersMap.Load(existingUserID)
 			userOrders := val.(map[string]order.Order)
 			if tc.expectedErr != nil {
-				assert.Equal(t, existingOrder, userOrders[existingOrder.Id], "order was updated, but shouldn't")
+				assert.Equal(t, existingOrder, userOrders[existingOrder.ID], "order was updated, but shouldn't")
 			} else {
-				assert.Equal(t, tc.newOrder, userOrders[existingOrder.Id], "order was updated, but shouldn't")
+				assert.Equal(t, tc.newOrder, userOrders[existingOrder.ID], "order was updated, but shouldn't")
 			}
 		})
 	}

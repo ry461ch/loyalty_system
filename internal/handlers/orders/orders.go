@@ -23,7 +23,7 @@ func NewOrderHandlers(orderService services.OrderService) *OrderHandlers {
 }
 
 func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
-	userId, err := uuid.Parse(req.Header.Get("X-User-Id"))
+	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -34,9 +34,9 @@ func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	orderId := string(reqBody)
+	orderID := string(reqBody)
 
-	err = oh.orderService.InsertOrder(req.Context(), userId, orderId)
+	err = oh.orderService.InsertOrder(req.Context(), userID, orderID)
 	if err != nil {
 		switch {
 		case errors.Is(err, exceptions.NewOrderConflictAnotherUserError()):
@@ -45,7 +45,7 @@ func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 		case errors.Is(err, exceptions.NewOrderConflictSameUserError()):
 			res.WriteHeader(http.StatusOK)
 			return
-		case errors.Is(err, exceptions.NewOrderBadIdFormatError()):
+		case errors.Is(err, exceptions.NewOrderBadIDFormatError()):
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		default:
@@ -57,13 +57,13 @@ func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 }
 
 func (oh *OrderHandlers) GetOrders(res http.ResponseWriter, req *http.Request) {
-	userId, err := uuid.Parse(req.Header.Get("X-User-Id"))
+	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
 		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	orders, err := oh.orderService.GetOrders(req.Context(), userId)
+	orders, err := oh.orderService.GetOrders(req.Context(), userID)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

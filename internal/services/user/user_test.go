@@ -18,7 +18,7 @@ import (
 
 func TestRegister(t *testing.T) {
 	existingUser := user.User{
-		Id:           uuid.New(),
+		ID:           uuid.New(),
 		Login:        "login_1",
 		PasswordHash: user.GeneratePasswordHash("test"),
 	}
@@ -74,7 +74,7 @@ func TestRegister(t *testing.T) {
 func TestLogin(t *testing.T) {
 	existingPassword := "test"
 	existingUser := user.User{
-		Id:           uuid.New(),
+		ID:           uuid.New(),
 		Login:        "login_1",
 		PasswordHash: user.GeneratePasswordHash(existingPassword),
 	}

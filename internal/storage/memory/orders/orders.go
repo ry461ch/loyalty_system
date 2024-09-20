@@ -25,52 +25,52 @@ func (oms *OrderMemStorage) InitializeOrderMemStorage(ctx context.Context) error
 	return nil
 }
 
-func (oms *OrderMemStorage) GetOrderUserId(ctx context.Context, orderId string) (*uuid.UUID, error) {
-	val, ok := oms.ordersToUsersMap.Load(orderId)
+func (oms *OrderMemStorage) GetOrderUserID(ctx context.Context, orderID string) (*uuid.UUID, error) {
+	val, ok := oms.ordersToUsersMap.Load(orderID)
 	if !ok {
 		return nil, exceptions.NewOrderNotFoundError()
 	}
-	userId := val.(uuid.UUID)
-	return &userId, nil
+	userID := val.(uuid.UUID)
+	return &userID, nil
 }
 
-func (oms *OrderMemStorage) InsertOrder(ctx context.Context, userId uuid.UUID, orderId string, trx *transaction.Trx) error {
-	oms.ordersToUsersMap.Store(orderId, userId)
+func (oms *OrderMemStorage) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string, trx *transaction.Trx) error {
+	oms.ordersToUsersMap.Store(orderID, userID)
 	newOrder := order.Order{
-		Id:        orderId,
+		ID:        orderID,
 		Status:    order.NEW,
 		CreatedAt: time.Now(),
 	}
 
-	val, ok := oms.usersToOrdersMap.Load(userId)
+	val, ok := oms.usersToOrdersMap.Load(userID)
 	if !ok {
 		val = map[string]order.Order{}
 	}
 	userOrders := val.(map[string]order.Order)
-	userOrders[orderId] = newOrder
-	oms.usersToOrdersMap.Store(userId, userOrders)
+	userOrders[orderID] = newOrder
+	oms.usersToOrdersMap.Store(userID, userOrders)
 	return nil
 }
 
 func (oms *OrderMemStorage) UpdateOrder(ctx context.Context, newOrder *order.Order, trx *transaction.Trx) error {
-	val, ok := oms.ordersToUsersMap.Load(newOrder.Id)
+	val, ok := oms.ordersToUsersMap.Load(newOrder.ID)
 	if !ok {
 		return exceptions.NewOrderNotFoundError()
 	}
-	userId := val.(uuid.UUID)
+	userID := val.(uuid.UUID)
 
-	val, ok = oms.usersToOrdersMap.Load(userId)
+	val, ok = oms.usersToOrdersMap.Load(userID)
 	if !ok {
 		return exceptions.NewOrderNotFoundError()
 	}
 	userOrders := val.(map[string]order.Order)
-	userOrders[newOrder.Id] = *newOrder
-	oms.usersToOrdersMap.Store(userId, userOrders)
+	userOrders[newOrder.ID] = *newOrder
+	oms.usersToOrdersMap.Store(userID, userOrders)
 	return nil
 }
 
-func (oms *OrderMemStorage) GetOrders(ctx context.Context, userId uuid.UUID) ([]order.Order, error) {
-	val, ok := oms.usersToOrdersMap.Load(userId)
+func (oms *OrderMemStorage) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
+	val, ok := oms.usersToOrdersMap.Load(userID)
 	if !ok {
 		return []order.Order{}, nil
 	}

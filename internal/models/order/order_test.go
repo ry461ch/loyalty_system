@@ -25,7 +25,7 @@ func TestUnmarshal(t *testing.T) {
 				"accrual": 500
 			}`,
 			expectedOrder: Order{
-				Id:        "1321",
+				ID:        "1321",
 				Status:    PROCESSED,
 				Accrual:   &accural,
 				CreatedAt: datetime,
@@ -38,7 +38,7 @@ func TestUnmarshal(t *testing.T) {
 				"status": "REGISTERED"
 			}`,
 			expectedOrder: Order{
-				Id:     "1321",
+				ID:     "1321",
 				Status: NEW,
 			},
 		},
@@ -49,7 +49,7 @@ func TestUnmarshal(t *testing.T) {
 			var order Order
 			err := json.Unmarshal([]byte(tc.inputOrder), &order)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.expectedOrder.Id, order.Id, "Id not equal")
+			assert.Equal(t, tc.expectedOrder.ID, order.ID, "Id not equal")
 			if tc.expectedOrder.Accrual != nil {
 				assert.Equal(t, *tc.expectedOrder.Accrual, *order.Accrual, "Accrual not equal")
 			}
@@ -70,7 +70,7 @@ func TestMarshal(t *testing.T) {
 		{
 			testName: "processed with accrual",
 			Order: Order{
-				Id:        "1321",
+				ID:        "1321",
 				Status:    PROCESSED,
 				Accrual:   &accural,
 				CreatedAt: datetime,
@@ -85,7 +85,7 @@ func TestMarshal(t *testing.T) {
 		{
 			testName: "processed without accrual",
 			Order: Order{
-				Id:        "1321",
+				ID:        "1321",
 				Status:    NEW,
 				CreatedAt: datetime,
 			},

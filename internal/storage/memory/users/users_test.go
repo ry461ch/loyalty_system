@@ -13,7 +13,7 @@ import (
 
 func TestInsertUser(t *testing.T) {
 	existingUser := user.User{
-		Id:           uuid.New(),
+		ID:           uuid.New(),
 		Login:        "login_1",
 		PasswordHash: []byte("testPass1"),
 	}
@@ -25,7 +25,7 @@ func TestInsertUser(t *testing.T) {
 		{
 			testName: "new user",
 			inputUser: user.User{
-				Id:           uuid.New(),
+				ID:           uuid.New(),
 				Login:        "login_2",
 				PasswordHash: []byte("testPass"),
 			},
@@ -33,7 +33,7 @@ func TestInsertUser(t *testing.T) {
 		{
 			testName: "existing user",
 			inputUser: user.User{
-				Id:           uuid.New(),
+				ID:           uuid.New(),
 				Login:        existingUser.Login,
 				PasswordHash: []byte("testPass2"),
 			},
@@ -54,7 +54,7 @@ func TestInsertUser(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	existingUser := user.User{
-		Id:           uuid.New(),
+		ID:           uuid.New(),
 		Login:        "login_1",
 		PasswordHash: []byte("testPass1"),
 	}

@@ -29,7 +29,7 @@ func mockRouter(orderHandlers *OrderHandlers) chi.Router {
 }
 
 type outputOrder struct {
-	Id       string    `json:"number"`
+	ID       string    `json:"number"`
 	Status   int       `json:"status"`
 	Accrual  float64   `json:"accrual"`
 	UploadAt time.Time `json:"upload_at"`
@@ -37,36 +37,36 @@ type outputOrder struct {
 
 func TestGetOrders(t *testing.T) {
 	accrual := float64(500)
-	existingUserId := uuid.New()
+	existingUserID := uuid.New()
 	existingOrders := []order.Order{
 		{
 			Accrual:   &accrual,
 			Status:    order.PROCESSED,
-			Id:        "1115",
+			ID:        "1115",
 			CreatedAt: time.Now(),
 		},
 		{
 			Status:    order.NEW,
-			Id:        "1321",
+			ID:        "1321",
 			CreatedAt: time.Now(),
 		},
 	}
 
 	testCases := []struct {
 		testName          string
-		inputUserId       uuid.UUID
+		inputUserID       uuid.UUID
 		expectedOrdersNum int
 		expectedCode      int
 	}{
 		{
 			testName:          "successful get orders of existing user",
-			inputUserId:       existingUserId,
+			inputUserID:       existingUserID,
 			expectedOrdersNum: 2,
 			expectedCode:      http.StatusOK,
 		},
 		{
 			testName:          "successful get orders of new user",
-			inputUserId:       uuid.New(),
+			inputUserID:       uuid.New(),
 			expectedOrdersNum: 0,
 			expectedCode:      http.StatusNoContent,
 		},
@@ -86,13 +86,13 @@ func TestGetOrders(t *testing.T) {
 			client := resty.New()
 
 			for _, existingOrder := range existingOrders {
-				orderService.InsertOrder(context.TODO(), existingUserId, existingOrder.Id)
+				orderService.InsertOrder(context.TODO(), existingUserID, existingOrder.ID)
 				orderService.UpdateOrder(context.TODO(), &existingOrder)
 			}
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
-				SetHeader("X-User-Id", tc.inputUserId.String()).
+				SetHeader("X-User-Id", tc.inputUserID.String()).
 				Execute(http.MethodGet, srv.URL+"/api/user/orders")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 
@@ -109,38 +109,38 @@ func TestGetOrders(t *testing.T) {
 }
 
 func TestPostOrder(t *testing.T) {
-	existingUserId := uuid.New()
-	existingOrderId := "1115"
-	invalidOrderid := "1111"
+	existingUserID := uuid.New()
+	existingOrderID := "1115"
+	invalidOrderID := "1111"
 
 	testCases := []struct {
 		testName     string
-		inputUserId  uuid.UUID
-		inputOrderId string
+		inputUserID  uuid.UUID
+		inputOrderID string
 		expectedCode int
 	}{
 		{
 			testName:     "successfully saved new order",
-			inputUserId:  existingUserId,
-			inputOrderId: "1321",
+			inputUserID:  existingUserID,
+			inputOrderID: "1321",
 			expectedCode: http.StatusAccepted,
 		},
 		{
 			testName:     "order was already saved",
-			inputUserId:  existingUserId,
-			inputOrderId: existingOrderId,
+			inputUserID:  existingUserID,
+			inputOrderID: existingOrderID,
 			expectedCode: http.StatusOK,
 		},
 		{
 			testName:     "order was already saved by another user",
-			inputUserId:  uuid.New(),
-			inputOrderId: existingOrderId,
+			inputUserID:  uuid.New(),
+			inputOrderID: existingOrderID,
 			expectedCode: http.StatusConflict,
 		},
 		{
 			testName:     "invalid order id",
-			inputUserId:  uuid.New(),
-			inputOrderId: invalidOrderid,
+			inputUserID:  uuid.New(),
+			inputOrderID: invalidOrderID,
 			expectedCode: http.StatusUnprocessableEntity,
 		},
 	}
@@ -158,11 +158,11 @@ func TestPostOrder(t *testing.T) {
 			defer srv.Close()
 			client := resty.New()
 
-			orderService.InsertOrder(context.TODO(), existingUserId, existingOrderId)
+			orderService.InsertOrder(context.TODO(), existingUserID, existingOrderID)
 
-			req := []byte(tc.inputOrderId)
+			req := []byte(tc.inputOrderID)
 			resp, _ := client.R().
-				SetHeader("X-User-Id", tc.inputUserId.String()).
+				SetHeader("X-User-Id", tc.inputUserID.String()).
 				SetBody(req).
 				Execute(http.MethodPost, srv.URL+"/api/user/orders")
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")

@@ -65,27 +65,27 @@ func (ops *OrderPGStorage) InitializeOrderPGStorage(ctx context.Context, db *sql
 	return nil
 }
 
-func (ops *OrderPGStorage) GetOrderUserId(ctx context.Context, orderId string) (*uuid.UUID, error) {
+func (ops *OrderPGStorage) GetOrderUserId(ctx context.Context, orderID string) (*uuid.UUID, error) {
 	getOrderFromDb := `
 		SELECT user_id FROM content.orders WHERE id = $1;
 	`
-	row := ops.db.QueryRowContext(ctx, getOrderFromDb, orderId)
-	var userId uuid.UUID
-	err := row.Scan(&userId)
+	row := ops.db.QueryRowContext(ctx, getOrderFromDb, orderID)
+	var userID uuid.UUID
+	err := row.Scan(&userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, exceptions.NewOrderNotFoundError()
 		}
 		return nil, err
 	}
-	return &userId, nil
+	return &userID, nil
 }
 
-func (ops *OrderPGStorage) InsertOrder(ctx context.Context, userId uuid.UUID, orderId string, trx *transaction.Trx) error {
+func (ops *OrderPGStorage) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string, trx *transaction.Trx) error {
 	insertOrderQuery := `
 		INSERT INTO content.orders (id, user_id) VALUES ($1, $2);
 	`
-	_, err := trx.ExecContext(ctx, insertOrderQuery, orderId, userId)
+	_, err := trx.ExecContext(ctx, insertOrderQuery, orderID, userID)
 	return err
 }
 
@@ -105,11 +105,11 @@ func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, 
 			Valid:   true,
 		}
 	}
-	_, err := trx.ExecContext(ctx, updateOrderQuery, order.Id, order.Status, accrual)
+	_, err := trx.ExecContext(ctx, updateOrderQuery, order.ID, order.Status, accrual)
 	return err
 }
 
-func (ops *OrderPGStorage) GetOrders(ctx context.Context, userId uuid.UUID) ([]order.Order, error) {
+func (ops *OrderPGStorage) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
 	getOrdersFromDb := `
 		SELECT id, status, accrual, created_at
 		FROM content.orders
@@ -117,7 +117,7 @@ func (ops *OrderPGStorage) GetOrders(ctx context.Context, userId uuid.UUID) ([]o
 		ORDER BY created_at DESC;
 	`
 
-	rows, err := ops.db.QueryContext(ctx, getOrdersFromDb, userId.String())
+	rows, err := ops.db.QueryContext(ctx, getOrdersFromDb, userID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (ops *OrderPGStorage) GetOrders(ctx context.Context, userId uuid.UUID) ([]o
 		var orderRow order.Order
 		var accrual sql.NullFloat64
 
-		err = rows.Scan(&orderRow.Id, &orderRow.Status, &accrual, &orderRow.CreatedAt)
+		err = rows.Scan(&orderRow.ID, &orderRow.Status, &accrual, &orderRow.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

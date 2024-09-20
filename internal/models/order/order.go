@@ -93,7 +93,7 @@ func (s *Status) UnmarshalJSON(data []byte) error {
 }
 
 type Order struct {
-	Id        string    `json:"number"`
+	ID        string    `json:"number"`
 	Status    Status    `json:"status"`
 	Accrual   *float64  `json:"accrual,omitempty"`
 	CreatedAt time.Time `json:"uploaded_at"`
@@ -104,7 +104,7 @@ func (o *Order) UnmarshalJSON(data []byte) error {
 
 	aliasValue := &struct {
 		*OrderAlias
-		Id string `json:"order"`
+		ID string `json:"order"`
 	}{
 		OrderAlias: (*OrderAlias)(o),
 	}
@@ -113,7 +113,7 @@ func (o *Order) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	o.Id = aliasValue.Id
+	o.ID = aliasValue.ID
 
 	return nil
 }
