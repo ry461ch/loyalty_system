@@ -20,8 +20,8 @@ func TestUnmarshal(t *testing.T) {
 				"sum": 500
 			}`,
 			expectedWithdrawal: Withdrawal{
-				OrderId:  "1321",
-				Sum: 500,
+				OrderId: "1321",
+				Sum:     500,
 			},
 		},
 	}

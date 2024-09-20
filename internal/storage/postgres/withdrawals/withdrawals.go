@@ -3,14 +3,14 @@ package withdrawalpgstorage
 import (
 	"context"
 	"database/sql"
-	"strings"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 
+	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
 	"github.com/ry461ch/loyalty_system/internal/storage/transaction"
-	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 )
 
 type WithdrawalPGStorage struct {
@@ -64,13 +64,13 @@ func (wps *WithdrawalPGStorage) InitializeWithdrawalPGStorage(ctx context.Contex
 	return nil
 }
 
-func (wps *WithdrawalPGStorage) InsertWithdrawl(ctx context.Context, userId uuid.UUID, withdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
+func (wps *WithdrawalPGStorage) InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
 	insertWithdrawalQuery := `
 		INSERT INTO content.withdrawals (id, order_id, user_id, sum)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO NOTHING;
 	`
-	_, err := trx.ExecContext(ctx, insertWithdrawalQuery, withdrawal.Id, withdrawal.OrderId, userId.String(), withdrawal.Sum)
+	_, err := trx.ExecContext(ctx, insertWithdrawalQuery, *inputWithdrawal.Id, inputWithdrawal.OrderId, *inputWithdrawal.UserId, inputWithdrawal.Sum)
 	return err
 }
 
@@ -121,7 +121,7 @@ func (wps *WithdrawalPGStorage) GetWithdrawal(ctx context.Context, Id uuid.UUID)
 		}
 		return nil, err
 	}
-	withdrawalInDb.Id = Id
+	withdrawalInDb.Id = &Id
 	return &withdrawalInDb, nil
 }
 

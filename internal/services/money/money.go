@@ -15,32 +15,42 @@ import (
 )
 
 type MoneyService struct {
-	moneyStorage storage.MoneyStorage
+	balanceStorage    storage.BalanceStorage
+	withdrawalStorage storage.WithdrawalStorage
 }
 
-func NewMoneyService(moneyStorage storage.MoneyStorage) *MoneyService {
+func NewMoneyService(balanceStorage storage.BalanceStorage, withdrawalStorage storage.WithdrawalStorage) *MoneyService {
 	return &MoneyService{
-		moneyStorage: moneyStorage,
+		balanceStorage:    balanceStorage,
+		withdrawalStorage: withdrawalStorage,
 	}
 }
 
-func (ms *MoneyService) Withdraw(ctx context.Context, userId uuid.UUID, withdrawal *withdrawal.Withdrawal) error {
-	if !orderhelper.ValidateOrderId(withdrawal.OrderId) {
+func (ms *MoneyService) Withdraw(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal) error {
+	if !orderhelper.ValidateOrderId(inputWithdrawal.OrderId) {
 		return exceptions.NewOrderBadIdFormatError()
 	}
-	if withdrawal.Sum <= 0 {
+	if inputWithdrawal.Sum <= 0 {
 		return exceptions.NewBalanceBadAmountFormatError()
 	}
 
-	userBalance, err := ms.moneyStorage.GetBalance(ctx, userId)
+	if inputWithdrawal.UserId == nil {
+		return exceptions.NewUserAuthenticationError()
+	}
+
+	userBalance, err := ms.balanceStorage.GetBalance(ctx, *inputWithdrawal.UserId)
 	if err != nil {
 		return err
 	}
-	if withdrawal.Sum > userBalance.Current {
+	if inputWithdrawal.Sum > userBalance.Current {
 		return exceptions.NewBalanceNotEnoughBalanceError()
 	}
 
-	existingWithdrawal, err := ms.moneyStorage.GetWithdrawal(ctx, withdrawal.Id)
+	if inputWithdrawal.Id == nil {
+		inputWithdrawalId := uuid.New()
+		inputWithdrawal.Id = &inputWithdrawalId
+	}
+	existingWithdrawal, err := ms.withdrawalStorage.GetWithdrawal(ctx, *inputWithdrawal.Id)
 	if existingWithdrawal != nil {
 		return nil
 	}
@@ -48,18 +58,18 @@ func (ms *MoneyService) Withdraw(ctx context.Context, userId uuid.UUID, withdraw
 		return err
 	}
 
-	tx, err := ms.moneyStorage.BeginTx(ctx)
+	tx, err := ms.withdrawalStorage.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = ms.moneyStorage.InsertWithdrawl(ctx, userId, withdrawal, tx)
+	err = ms.withdrawalStorage.InsertWithdrawal(ctx, inputWithdrawal, tx)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	err = ms.moneyStorage.ReduceBalance(ctx, userId, withdrawal.Sum, tx)
+	err = ms.balanceStorage.ReduceBalance(ctx, *inputWithdrawal.UserId, inputWithdrawal.Sum, tx)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -73,13 +83,13 @@ func (ms *MoneyService) AddAccrual(ctx context.Context, userId uuid.UUID, amount
 	if amount <= 0 {
 		return exceptions.NewBalanceBadAmountFormatError()
 	}
-	return ms.moneyStorage.AddBalance(ctx, userId, amount, trx)
+	return ms.balanceStorage.AddBalance(ctx, userId, amount, trx)
 }
 
 func (ms *MoneyService) GetBalance(ctx context.Context, userId uuid.UUID) (*balance.Balance, error) {
-	return ms.moneyStorage.GetBalance(ctx, userId)
+	return ms.balanceStorage.GetBalance(ctx, userId)
 }
 
 func (ms *MoneyService) GetWithdrawals(ctx context.Context, userId uuid.UUID) ([]withdrawal.Withdrawal, error) {
-	return ms.moneyStorage.GetWithdrawals(ctx, userId)
+	return ms.withdrawalStorage.GetWithdrawals(ctx, userId)
 }

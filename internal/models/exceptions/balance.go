@@ -2,17 +2,17 @@ package exceptions
 
 import "fmt"
 
-type BalanceStorageError struct {
+type BalanceError struct {
 	message string
 }
 
-func (bse BalanceStorageError) Error() string {
+func (bse BalanceError) Error() string {
 	return bse.message
 }
 
-func NewBalanceStorageError() error {
-	return BalanceStorageError{
-		message: "Balance storage error occured",
+func NewBalanceError() error {
+	return BalanceError{
+		message: "Balance error occured",
 	}
 }
 
@@ -27,7 +27,7 @@ func (bbafe BalanceBadAmountFormatError) Error() string {
 
 func NewBalanceBadAmountFormatError() error {
 	return BalanceBadAmountFormatError{
-		err:     NewBalanceStorageError(),
+		err:     NewBalanceError(),
 		message: "bad balance amount format",
 	}
 }
@@ -43,7 +43,7 @@ func (bnebe BalanceNotEnoughBalanceError) Error() string {
 
 func NewBalanceNotEnoughBalanceError() error {
 	return BalanceNotEnoughBalanceError{
-		err:     NewBalanceStorageError(),
+		err:     NewBalanceError(),
 		message: "not enough money on the balance",
 	}
 }

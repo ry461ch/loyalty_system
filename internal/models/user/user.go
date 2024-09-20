@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 )
@@ -39,12 +38,6 @@ type User struct {
 	Id           uuid.UUID `json:"uid"`
 	Login        string    `json:"login"`
 	PasswordHash []byte    `json:"-"`
-}
-
-type Claims struct {
-	jwt.RegisteredClaims
-	UserID uuid.UUID
-	Login  string
 }
 
 func New(inputUser InputUser) *User {

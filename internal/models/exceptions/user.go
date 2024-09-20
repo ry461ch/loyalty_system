@@ -2,17 +2,17 @@ package exceptions
 
 import "fmt"
 
-type UserStorageError struct {
+type UserError struct {
 	message string
 }
 
-func (use UserStorageError) Error() string {
+func (use UserError) Error() string {
 	return use.message
 }
 
-func NewUserStorageError() error {
-	return UserStorageError{
-		message: "user storage error occured",
+func NewUserError() error {
+	return UserError{
+		message: "user error occured",
 	}
 }
 
@@ -27,7 +27,7 @@ func (unfe UserNotFoundError) Error() string {
 
 func NewUserNotFoundError() error {
 	return UserNotFoundError{
-		err:     NewUserStorageError(),
+		err:     NewUserError(),
 		message: "user not found",
 	}
 }
@@ -43,7 +43,7 @@ func (unfe UserAuthenticationError) Error() string {
 
 func NewUserAuthenticationError() error {
 	return UserAuthenticationError{
-		err:     NewUserStorageError(),
+		err:     NewUserError(),
 		message: "user unauthorized",
 	}
 }
@@ -59,7 +59,7 @@ func (unfe UserConflictError) Error() string {
 
 func NewUserConflictError() error {
 	return UserConflictError{
-		err:     NewUserStorageError(),
+		err:     NewUserError(),
 		message: "user already exists",
 	}
 }
@@ -75,7 +75,7 @@ func (ubfe UserBadFormatError) Error() string {
 
 func NewUserBadFormatError() error {
 	return UserBadFormatError{
-		err:     NewUserStorageError(),
+		err:     NewUserError(),
 		message: "user bad data format",
 	}
 }

@@ -102,7 +102,7 @@ func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, 
 	if order.Accrual != nil {
 		accrual = sql.NullFloat64{
 			Float64: *order.Accrual,
-			Valid: true,
+			Valid:   true,
 		}
 	}
 	_, err := trx.ExecContext(ctx, updateOrderQuery, order.Id, order.Status, accrual)

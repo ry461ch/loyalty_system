@@ -12,7 +12,9 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
-	"github.com/ry461ch/loyalty_system/internal/storage/memory"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
 )
 
 func TestSaveOrder(t *testing.T) {
@@ -65,15 +67,17 @@ func TestSaveOrder(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			storage.InsertOrder(context.TODO(), existingUserId, existingOrderId, nil)
-			moneyService := moneyservice.NewMoneyService(storage)
-			orderService := NewOrderService(storage, moneyService)
+			orderStorage := ordermemstorage.NewOrderMemStorage()
+			orderStorage.InsertOrder(context.TODO(), existingUserId, existingOrderId, nil)
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
+			orderService := NewOrderService(orderStorage, moneyService)
 
 			err := orderService.InsertOrder(context.TODO(), tc.userId, tc.orderId)
 			assert.ErrorIs(t, tc.expectedSavingResult, err, "exceptions don't match")
 
-			ordersInDb, _ := storage.GetOrders(context.TODO(), tc.userId)
+			ordersInDb, _ := orderStorage.GetOrders(context.TODO(), tc.userId)
 			assert.Equal(t, tc.expectedOrdersNum, len(ordersInDb), "orders num don't match")
 		})
 	}
@@ -130,23 +134,25 @@ func TestUpdateOrder(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			storage.InsertOrder(context.TODO(), existingUserId, existingOrderId, nil)
-			storage.AddBalance(context.TODO(), existingUserId, existingBalance.Current+existingBalance.Withdrawn, nil)
-			storage.ReduceBalance(context.TODO(), existingUserId, existingBalance.Withdrawn, nil)
-			moneyService := moneyservice.NewMoneyService(storage)
-			orderService := NewOrderService(storage, moneyService)
+			orderStorage := ordermemstorage.NewOrderMemStorage()
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			orderStorage.InsertOrder(context.TODO(), existingUserId, existingOrderId, nil)
+			balanceStorage.AddBalance(context.TODO(), existingUserId, existingBalance.Current+existingBalance.Withdrawn, nil)
+			balanceStorage.ReduceBalance(context.TODO(), existingUserId, existingBalance.Withdrawn, nil)
+			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
+			orderService := NewOrderService(orderStorage, moneyService)
 
 			err := orderService.UpdateOrder(context.TODO(), &tc.inputOrder)
 			if tc.expectedSavingResult == nil {
 				assert.Nil(t, err, "not expected error")
-				ordersInDb, _ := storage.GetOrders(context.TODO(), existingUserId)
+				ordersInDb, _ := orderStorage.GetOrders(context.TODO(), existingUserId)
 				assert.Equal(t, tc.inputOrder, ordersInDb[0], "orders not equal")
 			} else {
 				assert.ErrorIs(t, err, tc.expectedSavingResult, "exceptions don't match")
 			}
 
-			balanceInDb, _ := storage.GetBalance(context.TODO(), existingUserId)
+			balanceInDb, _ := balanceStorage.GetBalance(context.TODO(), existingUserId)
 			assert.Equal(t, tc.expectedBalance, *balanceInDb, "balances not equal")
 		})
 	}
@@ -188,13 +194,15 @@ func TestGetOrders(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
+			orderStorage := ordermemstorage.NewOrderMemStorage()
 			for _, newOrder := range existingOrders {
-				storage.InsertOrder(context.TODO(), existingUserId, newOrder.Id, nil)
-				storage.UpdateOrder(context.TODO(), &newOrder, nil)
+				orderStorage.InsertOrder(context.TODO(), existingUserId, newOrder.Id, nil)
+				orderStorage.UpdateOrder(context.TODO(), &newOrder, nil)
 			}
-			moneyService := moneyservice.NewMoneyService(storage)
-			orderService := NewOrderService(storage, moneyService)
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
+			orderService := NewOrderService(orderStorage, moneyService)
 
 			userOrders, _ := orderService.GetOrders(context.TODO(), tc.userId)
 			assert.Equal(t, tc.expectedOrders, userOrders, "orders are not equal")

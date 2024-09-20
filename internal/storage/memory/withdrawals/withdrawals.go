@@ -26,20 +26,23 @@ func (wms *WithdrawalMemStorage) InitializeWithdrawalMemStorage(ctx context.Cont
 	return nil
 }
 
-func (wms *WithdrawalMemStorage) InsertWithdrawl(ctx context.Context, userId uuid.UUID, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
-	val, ok := wms.usersToWithdrawalsMap.Load(userId)
+func (wms *WithdrawalMemStorage) InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
+	val, ok := wms.usersToWithdrawalsMap.Load(*inputWithdrawal.UserId)
 	if !ok {
 		val = map[uuid.UUID]withdrawal.Withdrawal{}
 	}
 	userWithdrawals := val.(map[uuid.UUID]withdrawal.Withdrawal)
-	userWithdrawals[inputWithdrawal.Id] = withdrawal.Withdrawal{
-		CreatedAt: time.Now(),
+
+	createdAt := time.Now()
+	userWithdrawals[*inputWithdrawal.Id] = withdrawal.Withdrawal{
+		CreatedAt: &createdAt,
 		Id:        inputWithdrawal.Id,
 		OrderId:   inputWithdrawal.OrderId,
 		Sum:       inputWithdrawal.Sum,
+		UserId:    inputWithdrawal.UserId,
 	}
-	wms.usersToWithdrawalsMap.Store(userId, userWithdrawals)
-	wms.withdrawalsToUsersMap.Store(inputWithdrawal.Id, userId)
+	wms.usersToWithdrawalsMap.Store(*inputWithdrawal.UserId, userWithdrawals)
+	wms.withdrawalsToUsersMap.Store(*inputWithdrawal.Id, *inputWithdrawal.UserId)
 	return nil
 }
 
@@ -50,12 +53,12 @@ func (wms *WithdrawalMemStorage) GetWithdrawals(ctx context.Context, userId uuid
 	}
 	userWithdrawals := val.(map[uuid.UUID]withdrawal.Withdrawal)
 	resultWithdrawals := []withdrawal.Withdrawal{}
-	for _, userWithdrawal := range(userWithdrawals) {
+	for _, userWithdrawal := range userWithdrawals {
 		resultWithdrawals = append(resultWithdrawals, userWithdrawal)
 	}
 
 	slices.SortFunc(resultWithdrawals, func(left, right withdrawal.Withdrawal) int {
-		return right.CreatedAt.Compare(left.CreatedAt)
+		return right.CreatedAt.Compare(*left.CreatedAt)
 	})
 	return resultWithdrawals, nil
 }
@@ -66,7 +69,7 @@ func (wms *WithdrawalMemStorage) GetWithdrawal(ctx context.Context, Id uuid.UUID
 		return nil, exceptions.NewWithdrawalNotFoundError()
 	}
 	userId := userVal.(uuid.UUID)
-	
+
 	withdrawalsVal, ok := wms.usersToWithdrawalsMap.Load(userId)
 	if !ok {
 		withdrawalsVal = map[uuid.UUID]withdrawal.Withdrawal{}

@@ -13,8 +13,7 @@ import (
 )
 
 type UserService interface {
-	GetUserId(tokenStr string) (*uuid.UUID, error)
-	Authenticate(ctx context.Context, inputUser *user.InputUser) (*string, error)
+	Login(ctx context.Context, inputUser *user.InputUser) (*string, error)
 	Register(ctx context.Context, inputUser *user.InputUser) (*string, error)
 }
 
@@ -22,7 +21,7 @@ type MoneyService interface {
 	GetWithdrawals(ctx context.Context, userId uuid.UUID) ([]withdrawal.Withdrawal, error)
 	GetBalance(ctx context.Context, userId uuid.UUID) (*balance.Balance, error)
 	AddAccrual(ctx context.Context, userId uuid.UUID, amount float64, trx *transaction.Trx) error
-	Withdraw(ctx context.Context, userId uuid.UUID, withdrawal *withdrawal.Withdrawal) error
+	Withdraw(ctx context.Context, withdrawal *withdrawal.Withdrawal) error
 }
 
 type OrderService interface {

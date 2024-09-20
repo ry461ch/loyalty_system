@@ -12,16 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/resty.v1"
 
-	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
 	"github.com/ry461ch/loyalty_system/internal/services/user"
-	"github.com/ry461ch/loyalty_system/internal/storage/memory"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/users"
+	"github.com/ry461ch/loyalty_system/pkg/authentication"
 )
 
 func mockRouter(authHandlers *AuthHandlers) chi.Router {
 	router := chi.NewRouter()
 	router.Post("/api/user/register", authHandlers.Register)
-	router.Post("/api/user/login", authHandlers.Authenticate)
+	router.Post("/api/user/login", authHandlers.Login)
 	return router
 }
 
@@ -31,12 +31,10 @@ func TestRegister(t *testing.T) {
 		Password: "test",
 	}
 
-	storage := memstorage.NewMemStorage()
-	cfg := config.Config{
-		JWTSecretKey: "test",
-		TokenExp:     time.Hour,
-	}
-	userService := userservice.NewUserService(storage, &cfg)
+	secretKey := "test_secret_key"
+	storage := usermemstorage.NewUserMemStorage()
+	authenticator := authentication.NewAuthenticator(secretKey, time.Hour)
+	userService := userservice.NewUserService(storage, authenticator)
 	handlers := NewAuthHandlers(userService)
 	router := mockRouter(handlers)
 	srv := httptest.NewServer(router)
@@ -91,18 +89,16 @@ func TestRegister(t *testing.T) {
 	}
 }
 
-func TestAuthenticate(t *testing.T) {
+func TestLogin(t *testing.T) {
 	existingUser := user.InputUser{
 		Login:    "test",
 		Password: "test",
 	}
 
-	storage := memstorage.NewMemStorage()
-	cfg := config.Config{
-		JWTSecretKey: "test",
-		TokenExp:     time.Hour,
-	}
-	userService := userservice.NewUserService(storage, &cfg)
+	secretKey := "test_secret_key"
+	storage := usermemstorage.NewUserMemStorage()
+	authenticator := authentication.NewAuthenticator(secretKey, time.Hour)
+	userService := userservice.NewUserService(storage, authenticator)
 	handlers := NewAuthHandlers(userService)
 	router := mockRouter(handlers)
 	srv := httptest.NewServer(router)

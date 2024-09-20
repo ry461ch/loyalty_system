@@ -54,9 +54,10 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	inputWithdrawal.Id = withdrawalId
+	inputWithdrawal.Id = &withdrawalId
+	inputWithdrawal.UserId = &userId
 
-	err = mh.moneyService.Withdraw(req.Context(), userId, &inputWithdrawal)
+	err = mh.moneyService.Withdraw(req.Context(), &inputWithdrawal)
 	if err != nil {
 		switch {
 		case errors.Is(err, exceptions.NewBalanceNotEnoughBalanceError()):

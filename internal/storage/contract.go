@@ -29,7 +29,7 @@ type OrderStorage interface {
 type WithdrawalStorage interface {
 	GetWithdrawals(ctx context.Context, userId uuid.UUID) ([]withdrawal.Withdrawal, error)
 	GetWithdrawal(ctx context.Context, Id uuid.UUID) (*withdrawal.Withdrawal, error)
-	InsertWithdrawl(ctx context.Context, userId uuid.UUID, withdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error
+	InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error
 	BeginTx(ctx context.Context) (*transaction.Trx, error)
 }
 
@@ -40,18 +40,18 @@ type BalanceStorage interface {
 	BeginTx(ctx context.Context) (*transaction.Trx, error)
 }
 
-type MoneyStorage interface {
-	BalanceStorage
-	WithdrawalStorage
+// type MoneyStorage interface {
+// 	BalanceStorage
+// 	WithdrawalStorage
 
-	BeginTx(ctx context.Context) (*transaction.Trx, error)
-}
+// 	BeginTx(ctx context.Context) (*transaction.Trx, error)
+// }
 
-type Storage interface {
-	MoneyStorage
-	OrderStorage
-	UserStorage
+// type Storage interface {
+// 	MoneyStorage
+// 	OrderStorage
+// 	UserStorage
 
-	Initialize(ctx context.Context) error
-	BeginTx(ctx context.Context) (*transaction.Trx, error)
-}
+// 	Initialize(ctx context.Context) error
+// 	BeginTx(ctx context.Context) (*transaction.Trx, error)
+// }

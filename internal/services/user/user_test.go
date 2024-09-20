@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
-	"github.com/ry461ch/loyalty_system/internal/storage/memory"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/users"
+	"github.com/ry461ch/loyalty_system/pkg/authentication"
 )
 
 func TestRegister(t *testing.T) {
@@ -48,22 +48,20 @@ func TestRegister(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			cfg := config.Config{
-				JWTSecretKey: "test",
-				TokenExp:     time.Hour,
-			}
+			secretKey := "test"
+			storage := usermemstorage.NewUserMemStorage()
+			authenticator := authentication.NewAuthenticator(secretKey, time.Hour)
 			storage.InsertUser(context.TODO(), &existingUser, nil)
-			userService := NewUserService(storage, &cfg)
+			userService := NewUserService(storage, authenticator)
 
 			tokenStr, registerErr := userService.Register(context.TODO(), &tc.inputUser)
 			if tc.expectedSavingResult == nil {
-				claims := &user.Claims{}
+				claims := &authentication.Claims{}
 				_, err := jwt.ParseWithClaims(*tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 					if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 						return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 					}
-					return []byte(cfg.JWTSecretKey), nil
+					return []byte(secretKey), nil
 				})
 				assert.Nil(t, err, "invalid jwt token")
 			} else {
@@ -73,7 +71,7 @@ func TestRegister(t *testing.T) {
 	}
 }
 
-func TestAuthenticate(t *testing.T) {
+func TestLogin(t *testing.T) {
 	existingPassword := "test"
 	existingUser := user.User{
 		Id:           uuid.New(),
@@ -108,28 +106,26 @@ func TestAuthenticate(t *testing.T) {
 				Login:    "login_2",
 				Password: existingPassword,
 			},
-			expectedSavingResult: exceptions.NewUserNotFoundError(),
+			expectedSavingResult: exceptions.NewUserAuthenticationError(),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			cfg := config.Config{
-				JWTSecretKey: "test",
-				TokenExp:     time.Hour,
-			}
+			secretKey := "test"
+			storage := usermemstorage.NewUserMemStorage()
+			authenticator := authentication.NewAuthenticator(secretKey, time.Hour)
 			storage.InsertUser(context.TODO(), &existingUser, nil)
-			userService := NewUserService(storage, &cfg)
+			userService := NewUserService(storage, authenticator)
 
-			tokenStr, authErr := userService.Authenticate(context.TODO(), &tc.inputUser)
+			tokenStr, authErr := userService.Login(context.TODO(), &tc.inputUser)
 			if tc.expectedSavingResult == nil {
-				claims := &user.Claims{}
+				claims := &authentication.Claims{}
 				_, err := jwt.ParseWithClaims(*tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 					if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 						return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 					}
-					return []byte(cfg.JWTSecretKey), nil
+					return []byte(secretKey), nil
 				})
 				assert.Nil(t, err, "invalid jwt token")
 			} else {
@@ -137,85 +133,4 @@ func TestAuthenticate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestJWTValidation(t *testing.T) {
-	storage := memstorage.NewMemStorage()
-	cfg := config.Config{
-		JWTSecretKey: "test",
-	}
-	userService := NewUserService(storage, &cfg)
-	tokenUserId := uuid.New()
-
-	testCases := []struct {
-		testName    string
-		expiresAt   time.Time
-		secretKey   string
-		expectedErr error
-	}{
-		{
-			testName:    "valid token",
-			expiresAt:   time.Now().Add(time.Hour),
-			secretKey:   cfg.JWTSecretKey,
-			expectedErr: nil,
-		},
-		{
-			testName:    "expired token",
-			expiresAt:   time.Now().Add(-time.Hour),
-			secretKey:   cfg.JWTSecretKey,
-			expectedErr: exceptions.NewUserAuthenticationError(),
-		},
-		{
-			testName:    "invalid signature",
-			expiresAt:   time.Now().Add(time.Hour),
-			secretKey:   "invalid_secret_key",
-			expectedErr: exceptions.NewUserAuthenticationError(),
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, user.Claims{
-				RegisteredClaims: jwt.RegisteredClaims{
-					ExpiresAt: jwt.NewNumericDate(tc.expiresAt),
-				},
-				UserID: tokenUserId,
-				Login:  "login",
-			})
-
-			tokenStr, _ := token.SignedString([]byte(tc.secretKey))
-			userId, err := userService.GetUserId(tokenStr)
-			if tc.expectedErr == nil {
-				assert.Nil(t, err, "unexpected error")
-				assert.Equal(t, tokenUserId, *userId, "user ids don't match")
-			} else {
-				assert.ErrorIs(t, err, tc.expectedErr, "errors don't match")
-			}
-		})
-	}
-}
-
-func TestJWTGeneration(t *testing.T) {
-	storage := memstorage.NewMemStorage()
-	cfg := config.Config{
-		JWTSecretKey: "test",
-		TokenExp:     time.Hour,
-	}
-	userService := NewUserService(storage, &cfg)
-	inputUser := user.User{
-		Id:           uuid.New(),
-		Login:        "test",
-		PasswordHash: []byte("pass_hash"),
-	}
-	tokenStr, err := userService.makeJWT(&inputUser)
-	assert.Nil(t, err, "unexpected error")
-
-	claims := &user.Claims{}
-	_, err = jwt.ParseWithClaims(*tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-		}
-		return []byte(cfg.JWTSecretKey), nil
-	})
-	assert.Nil(t, err, "invalid jwt token")
 }

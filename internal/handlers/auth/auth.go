@@ -50,7 +50,7 @@ func (ah *AuthHandlers) Register(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func (ah *AuthHandlers) Authenticate(res http.ResponseWriter, req *http.Request) {
+func (ah *AuthHandlers) Login(res http.ResponseWriter, req *http.Request) {
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
@@ -64,7 +64,7 @@ func (ah *AuthHandlers) Authenticate(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	tokenStr, err := ah.userService.Authenticate(req.Context(), &inputUser)
+	tokenStr, err := ah.userService.Login(req.Context(), &inputUser)
 	if err != nil {
 		switch {
 		case errors.Is(err, exceptions.NewUserAuthenticationError()):

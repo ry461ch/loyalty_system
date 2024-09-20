@@ -16,7 +16,9 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/services/order"
-	"github.com/ry461ch/loyalty_system/internal/storage/memory"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
 )
 
 func mockRouter(orderHandlers *OrderHandlers) chi.Router {
@@ -62,19 +64,21 @@ func TestGetOrders(t *testing.T) {
 			expectedOrdersNum: 2,
 			expectedCode:      http.StatusOK,
 		},
-		// {
-		// 	testName:          "successful get orders of new user",
-		// 	inputUserId:       uuid.New(),
-		// 	expectedOrdersNum: 0,
-		// 	expectedCode:      http.StatusNoContent,
-		// },
+		{
+			testName:          "successful get orders of new user",
+			inputUserId:       uuid.New(),
+			expectedOrdersNum: 0,
+			expectedCode:      http.StatusNoContent,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			moneyService := moneyservice.NewMoneyService(storage)
-			orderService := orderservice.NewOrderService(storage, moneyService)
+			orderStorage := ordermemstorage.NewOrderMemStorage()
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
+			orderService := orderservice.NewOrderService(orderStorage, moneyService)
 			handlers := NewOrderHandlers(orderService)
 			router := mockRouter(handlers)
 			srv := httptest.NewServer(router)
@@ -143,9 +147,11 @@ func TestPostOrder(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			moneyService := moneyservice.NewMoneyService(storage)
-			orderService := orderservice.NewOrderService(storage, moneyService)
+			orderStorage := ordermemstorage.NewOrderMemStorage()
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
+			orderService := orderservice.NewOrderService(orderStorage, moneyService)
 			handlers := NewOrderHandlers(orderService)
 			router := mockRouter(handlers)
 			srv := httptest.NewServer(router)

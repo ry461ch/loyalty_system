@@ -3,26 +3,24 @@ package userservice
 import (
 	"context"
 	"errors"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 
-	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
 	"github.com/ry461ch/loyalty_system/internal/storage"
+	"github.com/ry461ch/loyalty_system/pkg/authentication"
 )
 
 type UserService struct {
-	userStorage storage.UserStorage
-	cfg         *config.Config
+	userStorage   storage.UserStorage
+	authenticator *authentication.Authenticator
 }
 
-func NewUserService(userStorage storage.UserStorage, cfg *config.Config) *UserService {
+func NewUserService(userStorage storage.UserStorage, authenticator *authentication.Authenticator) *UserService {
 	return &UserService{
-		userStorage: userStorage,
-		cfg:         cfg,
+		userStorage:   userStorage,
+		authenticator: authenticator,
 	}
 }
 
@@ -50,10 +48,10 @@ func (us *UserService) Register(ctx context.Context, inputUser *user.InputUser) 
 	if err != nil {
 		return nil, err
 	}
-	return us.makeJWT(&newUser)
+	return us.authenticator.MakeJWT(newUser.Id, newUser.Login)
 }
 
-func (us *UserService) Authenticate(ctx context.Context, inputUser *user.InputUser) (*string, error) {
+func (us *UserService) Login(ctx context.Context, inputUser *user.InputUser) (*string, error) {
 	userInDB, err := us.userStorage.GetUser(ctx, inputUser.Login)
 	if err != nil {
 		if errors.Is(err, exceptions.NewUserNotFoundError()) {
@@ -66,41 +64,5 @@ func (us *UserService) Authenticate(ctx context.Context, inputUser *user.InputUs
 		return nil, exceptions.NewUserAuthenticationError()
 	}
 
-	return us.makeJWT(userInDB)
-}
-
-func (us *UserService) GetUserId(tokenStr string) (*uuid.UUID, error) {
-	claims := &user.Claims{}
-	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, exceptions.NewUserAuthenticationError()
-		}
-		return []byte(us.cfg.JWTSecretKey), nil
-	})
-	if err != nil {
-		return nil, exceptions.NewUserAuthenticationError()
-	}
-
-	if !token.Valid {
-		return nil, exceptions.NewUserAuthenticationError()
-	}
-
-	return &claims.UserID, nil
-}
-
-func (us *UserService) makeJWT(requestedUser *user.User) (*string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, user.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(us.cfg.TokenExp)),
-		},
-		UserID: requestedUser.Id,
-		Login:  requestedUser.Login,
-	})
-
-	tokenString, err := token.SignedString([]byte(us.cfg.JWTSecretKey))
-	if err != nil {
-		return nil, err
-	}
-
-	return &tokenString, nil
+	return us.authenticator.MakeJWT(userInDB.Id, userInDB.Login)
 }

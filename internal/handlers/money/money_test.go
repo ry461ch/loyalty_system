@@ -16,7 +16,8 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
-	"github.com/ry461ch/loyalty_system/internal/storage/memory"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
+	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
 )
 
 func mockRouter(moneyHandlers *MoneyHandlers) chi.Router {
@@ -33,15 +34,19 @@ func TestGetBalance(t *testing.T) {
 		Current:   200,
 		Withdrawn: 300,
 	}
+	existingWithdrawalId := uuid.New()
+	createdAt := time.Now()
 	existingWithdrawal := withdrawal.Withdrawal{
-		Id:        uuid.New(),
+		Id:        &existingWithdrawalId,
 		OrderId:   "1115",
+		UserId:    &existingUserId,
 		Sum:       existingBalance.Withdrawn,
-		CreatedAt: time.Now(),
+		CreatedAt: &createdAt,
 	}
 
-	storage := memstorage.NewMemStorage()
-	moneyService := moneyservice.NewMoneyService(storage)
+	balanceStorage := balancememstorage.NewBalanceMemStorage()
+	withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	handlers := NewMoneyHandlers(moneyService)
 	router := mockRouter(handlers)
 	srv := httptest.NewServer(router)
@@ -71,7 +76,7 @@ func TestGetBalance(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			moneyService.AddAccrual(context.TODO(), existingUserId, existingBalance.Current+existingBalance.Withdrawn, nil)
-			moneyService.Withdraw(context.TODO(), existingUserId, &existingWithdrawal)
+			moneyService.Withdraw(context.TODO(), &existingWithdrawal)
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
@@ -86,21 +91,32 @@ func TestGetBalance(t *testing.T) {
 	}
 }
 
+type outputWithdrawal struct {
+	OrderId     string    `json:"order"`
+	Sum         float64   `json:"sum"`
+	ProcessedAt time.Time `json:"processed_at"`
+}
+
 func TestGetWithdrawals(t *testing.T) {
 	existingUserId := uuid.New()
+	existingWithdrawalId1 := uuid.New()
+	existingWithdrawalId2 := uuid.New()
 	existingWithdrawal1 := withdrawal.Withdrawal{
-		Id:      uuid.New(),
+		Id:      &existingWithdrawalId1,
 		OrderId: "1115",
+		UserId:  &existingUserId,
 		Sum:     300,
 	}
 	existingWithdrawal2 := withdrawal.Withdrawal{
-		Id:      uuid.New(),
+		Id:      &existingWithdrawalId2,
+		UserId:  &existingUserId,
 		OrderId: "1321",
 		Sum:     200,
 	}
 
-	storage := memstorage.NewMemStorage()
-	moneyService := moneyservice.NewMoneyService(storage)
+	balanceStorage := balancememstorage.NewBalanceMemStorage()
+	withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	handlers := NewMoneyHandlers(moneyService)
 	router := mockRouter(handlers)
 	srv := httptest.NewServer(router)
@@ -130,8 +146,10 @@ func TestGetWithdrawals(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			moneyService.AddAccrual(context.TODO(), existingUserId, existingWithdrawal1.Sum+existingWithdrawal2.Sum, nil)
-			moneyService.Withdraw(context.TODO(), existingUserId, &existingWithdrawal1)
-			moneyService.Withdraw(context.TODO(), existingUserId, &existingWithdrawal2)
+			err := moneyService.Withdraw(context.TODO(), &existingWithdrawal1)
+			assert.Nil(t, err)
+			err = moneyService.Withdraw(context.TODO(), &existingWithdrawal2)
+			assert.Nil(t, err)
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
@@ -140,7 +158,7 @@ func TestGetWithdrawals(t *testing.T) {
 			assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Код ответа не совпадает с ожидаемым")
 
 			if tc.expectedWithdrawalsNum != 0 {
-				var respWithdrawals []withdrawal.Withdrawal
+				var respWithdrawals []outputWithdrawal
 				json.Unmarshal(resp.Body(), &respWithdrawals)
 				assert.Equal(t, tc.expectedWithdrawalsNum, len(respWithdrawals), "withdrawals not equal")
 			}
@@ -156,9 +174,11 @@ type InputWithdrawal struct {
 func TestPostWithdraw(t *testing.T) {
 	existingUserId := uuid.New()
 	existingBalanceCurrent := float64(200)
+	existingWithdrawalId := uuid.New()
 	existingWithdrawal := withdrawal.Withdrawal{
-		Id:      uuid.New(),
+		Id:      &existingWithdrawalId,
 		OrderId: "1115",
+		UserId:  &existingUserId,
 		Sum:     300,
 	}
 
@@ -250,8 +270,9 @@ func TestPostWithdraw(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			storage := memstorage.NewMemStorage()
-			moneyService := moneyservice.NewMoneyService(storage)
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 			handlers := NewMoneyHandlers(moneyService)
 			router := mockRouter(handlers)
 			srv := httptest.NewServer(router)
@@ -259,7 +280,7 @@ func TestPostWithdraw(t *testing.T) {
 			client := resty.New()
 
 			moneyService.AddAccrual(context.TODO(), existingUserId, existingBalanceCurrent+existingWithdrawal.Sum, nil)
-			moneyService.Withdraw(context.TODO(), existingUserId, &existingWithdrawal)
+			moneyService.Withdraw(context.TODO(), &existingWithdrawal)
 
 			var req []byte
 			if tc.inputWithdrawal != nil {

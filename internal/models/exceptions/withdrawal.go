@@ -2,17 +2,17 @@ package exceptions
 
 import "fmt"
 
-type WithdrawalStorageError struct {
+type WithdrawalError struct {
 	message string
 }
 
-func (wse WithdrawalStorageError) Error() string {
+func (wse WithdrawalError) Error() string {
 	return wse.message
 }
 
-func NewWithdrawalStorageError() error {
-	return WithdrawalStorageError{
-		message: "Withdrawal storage error occured",
+func NewWithdrawalError() error {
+	return WithdrawalError{
+		message: "Withdrawal error occured",
 	}
 }
 
@@ -27,7 +27,23 @@ func (wnfe WithdrawalNotFoundError) Error() string {
 
 func NewWithdrawalNotFoundError() error {
 	return WithdrawalNotFoundError{
-		err:     NewWithdrawalStorageError(),
+		err:     NewWithdrawalError(),
 		message: "withdrawal not found",
+	}
+}
+
+type WithdrawalBadFormatError struct {
+	err     error
+	message string
+}
+
+func (wbfe WithdrawalBadFormatError) Error() string {
+	return fmt.Sprintf("%v: %s", wbfe.err, wbfe.message)
+}
+
+func NewWithdrawalBadFormatError() error {
+	return WithdrawalBadFormatError{
+		err:     NewWithdrawalError(),
+		message: "withdrawal bad format",
 	}
 }

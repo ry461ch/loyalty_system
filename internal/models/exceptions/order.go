@@ -2,17 +2,17 @@ package exceptions
 
 import "fmt"
 
-type OrderStorageError struct {
+type OrderError struct {
 	message string
 }
 
-func (ose OrderStorageError) Error() string {
+func (ose OrderError) Error() string {
 	return ose.message
 }
 
-func NewOrderStorageError() error {
-	return OrderStorageError{
-		message: "Order storage error occured",
+func NewOrderError() error {
+	return OrderError{
+		message: "Order error occured",
 	}
 }
 
@@ -27,7 +27,7 @@ func (obife OrderBadIdFormatError) Error() string {
 
 func NewOrderBadIdFormatError() error {
 	return OrderBadIdFormatError{
-		err:     NewOrderStorageError(),
+		err:     NewOrderError(),
 		message: "bad order id format",
 	}
 }
@@ -43,7 +43,7 @@ func (obsfe OrderBadStatusFormatError) Error() string {
 
 func NewOrderBadStatusFormatError() error {
 	return OrderBadStatusFormatError{
-		err:     NewOrderStorageError(),
+		err:     NewOrderError(),
 		message: "bad order status format",
 	}
 }
@@ -59,7 +59,7 @@ func (oce OrderConflictError) Error() string {
 
 func NewOrderConflictError() error {
 	return OrderConflictError{
-		err:     NewOrderStorageError(),
+		err:     NewOrderError(),
 		message: "order already exists",
 	}
 }
@@ -75,7 +75,7 @@ func (ocsue OrderConflictSameUserError) Error() string {
 
 func NewOrderConflictSameUserError() error {
 	return OrderConflictSameUserError{
-		err:     NewOrderStorageError(),
+		err:     NewOrderError(),
 		message: "order already exists with same user",
 	}
 }
@@ -91,7 +91,7 @@ func (ocaue OrderConflictAnotherUserError) Error() string {
 
 func NewOrderConflictAnotherUserError() error {
 	return OrderConflictAnotherUserError{
-		err:     NewOrderStorageError(),
+		err:     NewOrderError(),
 		message: "order already exists with another user",
 	}
 }
@@ -107,7 +107,7 @@ func (onfe OrderNotFoundError) Error() string {
 
 func NewOrderNotFoundError() error {
 	return OrderNotFoundError{
-		err:     NewOrderStorageError(),
+		err:     NewOrderError(),
 		message: "order not found",
 	}
 }
