@@ -12,7 +12,7 @@ import (
 )
 
 type UserPGStorage struct {
-	db  *sql.DB
+	DB  *sql.DB
 	dsn string
 }
 
@@ -35,24 +35,24 @@ func getDDL() string {
 func NewUserPGStorage(DBDsn string) *UserPGStorage {
 	return &UserPGStorage{
 		dsn: DBDsn,
-		db:  nil,
+		DB:  nil,
 	}
 }
 
-func (ups *UserPGStorage) InitializeUserPGStorage(ctx context.Context, db *sql.DB) error {
-	if db == nil {
-		newDb, err := sql.Open("pgx", ups.dsn)
+func (ups *UserPGStorage) InitializeUserPGStorage(ctx context.Context, DB *sql.DB) error {
+	if DB == nil {
+		newDB, err := sql.Open("pgx", ups.dsn)
 		if err != nil {
 			return err
 		}
-		db = newDb
+		DB = newDB
 	}
-	ups.db = db
+	ups.DB = DB
 
 	requests := strings.Split(getDDL(), ";")
 	for _, request := range requests {
 		if request != "" {
-			_, err := ups.db.ExecContext(ctx, request)
+			_, err := ups.DB.ExecContext(ctx, request)
 			if err != nil {
 				return err
 			}
@@ -63,10 +63,10 @@ func (ups *UserPGStorage) InitializeUserPGStorage(ctx context.Context, db *sql.D
 }
 
 func (ups *UserPGStorage) GetUser(ctx context.Context, login string) (*user.User, error) {
-	getUserFromDb := `
+	getUserFromDB := `
 		SELECT uid, login, password_hash FROM content.users WHERE login = $1;
 	`
-	row := ups.db.QueryRowContext(ctx, getUserFromDb, login)
+	row := ups.DB.QueryRowContext(ctx, getUserFromDB, login)
 
 	var userInDB user.User
 	err := row.Scan(&userInDB.ID, &userInDB.Login, &userInDB.PasswordHash)
@@ -88,5 +88,5 @@ func (ups *UserPGStorage) InsertUser(ctx context.Context, newUser *user.User, tr
 }
 
 func (ups *UserPGStorage) BeginTx(ctx context.Context) (*transaction.Trx, error) {
-	return transaction.BeginTx(ctx, ups.db)
+	return transaction.BeginTx(ctx, ups.DB)
 }

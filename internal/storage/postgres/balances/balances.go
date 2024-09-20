@@ -13,7 +13,7 @@ import (
 )
 
 type BalancePGStorage struct {
-	db  *sql.DB
+	DB  *sql.DB
 	dsn string
 }
 
@@ -35,24 +35,24 @@ func getDDL() string {
 func NewBalancePGStorage(DBDsn string) *BalancePGStorage {
 	return &BalancePGStorage{
 		dsn: DBDsn,
-		db:  nil,
+		DB:  nil,
 	}
 }
 
-func (bps *BalancePGStorage) InitializeBalancePGStorage(ctx context.Context, db *sql.DB) error {
-	if db == nil {
-		newDb, err := sql.Open("pgx", bps.dsn)
+func (bps *BalancePGStorage) InitializeBalancePGStorage(ctx context.Context, DB *sql.DB) error {
+	if DB == nil {
+		newDB, err := sql.Open("pgx", bps.dsn)
 		if err != nil {
 			return err
 		}
-		db = newDb
+		DB = newDB
 	}
-	bps.db = db
+	bps.DB = DB
 
 	requests := strings.Split(getDDL(), ";")
 	for _, request := range requests {
 		if request != "" {
-			_, err := bps.db.ExecContext(ctx, request)
+			_, err := bps.DB.ExecContext(ctx, request)
 			if err != nil {
 				return err
 			}
@@ -62,11 +62,11 @@ func (bps *BalancePGStorage) InitializeBalancePGStorage(ctx context.Context, db 
 	return nil
 }
 
-func (bps *BalancePGStorage) GetBalance(ctx context.Context, userId uuid.UUID) (*balance.Balance, error) {
-	getBalanceFromDb := `
+func (bps *BalancePGStorage) GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error) {
+	getBalanceFromDB := `
 		SELECT current, withdrawn FROM content.balances WHERE user_id = $1;
 	`
-	row := bps.db.QueryRowContext(ctx, getBalanceFromDb, userId.String())
+	row := bps.DB.QueryRowContext(ctx, getBalanceFromDB, userID.String())
 
 	var userBalance balance.Balance
 	err := row.Scan(&userBalance.Current, &userBalance.Withdrawn)
@@ -79,7 +79,7 @@ func (bps *BalancePGStorage) GetBalance(ctx context.Context, userId uuid.UUID) (
 	return &userBalance, nil
 }
 
-func (bps *BalancePGStorage) ReduceBalance(ctx context.Context, userId uuid.UUID, amount float64, trx *transaction.Trx) error {
+func (bps *BalancePGStorage) ReduceBalance(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error {
 	spendAmountQuery := `
 		UPDATE content.balances
 		SET
@@ -88,11 +88,11 @@ func (bps *BalancePGStorage) ReduceBalance(ctx context.Context, userId uuid.UUID
 			updated_at = CURRENT_TIMESTAMP
 		WHERE user_id = $1;
 	`
-	_, err := trx.ExecContext(ctx, spendAmountQuery, userId, amount)
+	_, err := trx.ExecContext(ctx, spendAmountQuery, userID, amount)
 	return err
 }
 
-func (bps *BalancePGStorage) AddBalance(ctx context.Context, userId uuid.UUID, amount float64, trx transaction.Trx) error {
+func (bps *BalancePGStorage) AddBalance(ctx context.Context, userID uuid.UUID, amount float64, trx transaction.Trx) error {
 	insertBalanceQuery := `
 		INSERT INTO content.balances (user_id, current)
 		VALUES ($1, $2)
@@ -102,10 +102,10 @@ func (bps *BalancePGStorage) AddBalance(ctx context.Context, userId uuid.UUID, a
 			updated_at = CURRENT_TIMESTAMP
 		;
 	`
-	_, err := trx.ExecContext(ctx, insertBalanceQuery, userId, amount)
+	_, err := trx.ExecContext(ctx, insertBalanceQuery, userID, amount)
 	return err
 }
 
 func (bps *BalancePGStorage) BeginTx(ctx context.Context) (*transaction.Trx, error) {
-	return transaction.BeginTx(ctx, bps.db)
+	return transaction.BeginTx(ctx, bps.DB)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 type OrderPGStorage struct {
-	db  *sql.DB
+	DB  *sql.DB
 	dsn string
 }
 
@@ -38,24 +38,24 @@ func getDDL() string {
 func NewOrderPGStorage(DBDsn string) *OrderPGStorage {
 	return &OrderPGStorage{
 		dsn: DBDsn,
-		db:  nil,
+		DB:  nil,
 	}
 }
 
-func (ops *OrderPGStorage) InitializeOrderPGStorage(ctx context.Context, db *sql.DB) error {
-	if db == nil {
-		newDb, err := sql.Open("pgx", ops.dsn)
+func (ops *OrderPGStorage) InitializeOrderPGStorage(ctx context.Context, DB *sql.DB) error {
+	if DB == nil {
+		newDB, err := sql.Open("pgx", ops.dsn)
 		if err != nil {
 			return err
 		}
-		db = newDb
+		DB = newDB
 	}
-	ops.db = db
+	ops.DB = DB
 
 	requests := strings.Split(getDDL(), ";")
 	for _, request := range requests {
 		if request != "" {
-			_, err := ops.db.ExecContext(ctx, request)
+			_, err := ops.DB.ExecContext(ctx, request)
 			if err != nil {
 				return err
 			}
@@ -66,10 +66,10 @@ func (ops *OrderPGStorage) InitializeOrderPGStorage(ctx context.Context, db *sql
 }
 
 func (ops *OrderPGStorage) GetOrderUserId(ctx context.Context, orderID string) (*uuid.UUID, error) {
-	getOrderFromDb := `
+	getOrderFromDB := `
 		SELECT user_id FROM content.orders WHERE id = $1;
 	`
-	row := ops.db.QueryRowContext(ctx, getOrderFromDb, orderID)
+	row := ops.DB.QueryRowContext(ctx, getOrderFromDB, orderID)
 	var userID uuid.UUID
 	err := row.Scan(&userID)
 	if err != nil {
@@ -110,14 +110,14 @@ func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, 
 }
 
 func (ops *OrderPGStorage) GetOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
-	getOrdersFromDb := `
+	getOrdersFromDB := `
 		SELECT id, status, accrual, created_at
 		FROM content.orders
 		WHERE user_id = $1
 		ORDER BY created_at DESC;
 	`
 
-	rows, err := ops.db.QueryContext(ctx, getOrdersFromDb, userID.String())
+	rows, err := ops.DB.QueryContext(ctx, getOrdersFromDB, userID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -147,5 +147,5 @@ func (ops *OrderPGStorage) GetOrders(ctx context.Context, userID uuid.UUID) ([]o
 }
 
 func (ops *OrderPGStorage) BeginTx(ctx context.Context) (*transaction.Trx, error) {
-	return transaction.BeginTx(ctx, ops.db)
+	return transaction.BeginTx(ctx, ops.DB)
 }

@@ -11,12 +11,12 @@ func Authenticate(authenticator *authentication.Authenticator) func(http.Handler
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			reqHeaderJWT := r.Header.Get("Authorization")
 
-			userId, err := authenticator.GetUserId(reqHeaderJWT)
+			userID, err := authenticator.GetUserID(reqHeaderJWT)
 			if err != nil {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			r.Header.Set("X-User-Id", userId.String())
+			r.Header.Set("X-User-Id", userID.String())
 			next.ServeHTTP(w, r)
 		})
 	}

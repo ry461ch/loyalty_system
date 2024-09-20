@@ -23,9 +23,9 @@ func (t *Trx) Rollback() error {
 	return nil
 }
 
-func BeginTx(ctx context.Context, db *sql.DB) (*Trx, error) {
-	if db != nil {
-		sqlTx, err := db.BeginTx(ctx, nil)
+func BeginTx(ctx context.Context, DB *sql.DB) (*Trx, error) {
+	if DB != nil {
+		sqlTx, err := DB.BeginTx(ctx, nil)
 		if err != nil {
 			return nil, err
 		}

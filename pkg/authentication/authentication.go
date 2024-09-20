@@ -26,12 +26,12 @@ func NewAuthenticator(secretKey string, tokenExp time.Duration) *Authenticator {
 	}
 }
 
-func (a *Authenticator) MakeJWT(id uuid.UUID, login string) (*string, error) {
+func (a *Authenticator) MakeJWT(ID uuid.UUID, login string) (*string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(a.tokenExp)),
 		},
-		UserID: id,
+		UserID: ID,
 		Login:  login,
 	})
 
@@ -44,7 +44,7 @@ func (a *Authenticator) MakeJWT(id uuid.UUID, login string) (*string, error) {
 }
 
 
-func (a *Authenticator) GetUserId(tokenStr string) (*uuid.UUID, error) {
+func (a *Authenticator) GetUserID(tokenStr string) (*uuid.UUID, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {

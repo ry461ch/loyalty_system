@@ -14,7 +14,7 @@ import (
 )
 
 type WithdrawalPGStorage struct {
-	db  *sql.DB
+	DB  *sql.DB
 	dsn string
 }
 
@@ -37,24 +37,24 @@ func getDDL() string {
 func NewWithdrawalPGStorage(DBDsn string) *WithdrawalPGStorage {
 	return &WithdrawalPGStorage{
 		dsn: DBDsn,
-		db:  nil,
+		DB:  nil,
 	}
 }
 
-func (wps *WithdrawalPGStorage) InitializeWithdrawalPGStorage(ctx context.Context, db *sql.DB) error {
-	if db == nil {
-		newDb, err := sql.Open("pgx", wps.dsn)
+func (wps *WithdrawalPGStorage) InitializeWithdrawalPGStorage(ctx context.Context, DB *sql.DB) error {
+	if DB == nil {
+		newDB, err := sql.Open("pgx", wps.dsn)
 		if err != nil {
 			return err
 		}
-		db = newDb
+		DB = newDB
 	}
-	wps.db = db
+	wps.DB = DB
 
 	requests := strings.Split(getDDL(), ";")
 	for _, request := range requests {
 		if request != "" {
-			_, err := wps.db.ExecContext(ctx, request)
+			_, err := wps.DB.ExecContext(ctx, request)
 			if err != nil {
 				return err
 			}
@@ -75,13 +75,13 @@ func (wps *WithdrawalPGStorage) InsertWithdrawal(ctx context.Context, inputWithd
 }
 
 func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userID uuid.UUID) ([]withdrawal.Withdrawal, error) {
-	getWithdrawalsFromDb := `
+	getWithdrawalsFromDB := `
 		SELECT id, order_id, sum, created_at
 		FROM content.withdrawals
 		WHERE user_id = $1
 		ORDER BY created_at DESC;
 	`
-	rows, err := wps.db.QueryContext(ctx, getWithdrawalsFromDb, userID.String())
+	rows, err := wps.DB.QueryContext(ctx, getWithdrawalsFromDB, userID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -106,25 +106,25 @@ func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userID uuid.
 }
 
 func (wps *WithdrawalPGStorage) GetWithdrawal(ctx context.Context, ID uuid.UUID) (*withdrawal.Withdrawal, error) {
-	getWithdrawalFromDb := `
+	getWithdrawalFromDB := `
 		SELECT order_id, sum, created_at
 		FROM content.withdrawals
 		WHERE id = $1;
 	`
-	row := wps.db.QueryRowContext(ctx, getWithdrawalFromDb, ID)
+	row := wps.DB.QueryRowContext(ctx, getWithdrawalFromDB, ID)
 
-	var withdrawalInDb withdrawal.Withdrawal
-	err := row.Scan(&withdrawalInDb.OrderID, &withdrawalInDb.Sum, &withdrawalInDb.CreatedAt)
+	var withdrawalInDB withdrawal.Withdrawal
+	err := row.Scan(&withdrawalInDB.OrderID, &withdrawalInDB.Sum, &withdrawalInDB.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, exceptions.NewWithdrawalNotFoundError()
 		}
 		return nil, err
 	}
-	withdrawalInDb.ID = &ID
-	return &withdrawalInDb, nil
+	withdrawalInDB.ID = &ID
+	return &withdrawalInDB, nil
 }
 
 func (wps *WithdrawalPGStorage) BeginTx(ctx context.Context) (*transaction.Trx, error) {
-	return transaction.BeginTx(ctx, wps.db)
+	return transaction.BeginTx(ctx, wps.DB)
 }

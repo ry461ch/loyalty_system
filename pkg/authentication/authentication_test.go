@@ -17,7 +17,7 @@ func TestJWTValidation(t *testing.T) {
 		secretKey: secretKey,
 		tokenExp: time.Hour,
 	}
-	tokenUserId := uuid.New()
+	tokenUserID := uuid.New()
 
 	testCases := []struct {
 		testName    string
@@ -51,15 +51,15 @@ func TestJWTValidation(t *testing.T) {
 				RegisteredClaims: jwt.RegisteredClaims{
 					ExpiresAt: jwt.NewNumericDate(tc.expiresAt),
 				},
-				UserID: tokenUserId,
+				UserID: tokenUserID,
 				Login:  "login",
 			})
 
 			tokenStr, _ := token.SignedString([]byte(tc.secretKey))
-			userId, err := authenticator.GetUserId(tokenStr)
+			userID, err := authenticator.GetUserID(tokenStr)
 			if !tc.expectedErr {
 				assert.Nil(t, err, "unexpected error")
-				assert.Equal(t, tokenUserId, *userId, "user ids don't match")
+				assert.Equal(t, tokenUserID, *userID, "user ids don't match")
 			} else {
 				assert.Error(t, err, "sholud be an error")
 			}
@@ -73,10 +73,10 @@ func TestJWTGeneration(t *testing.T) {
 		secretKey: 	  secretKey,
 		tokenExp:     time.Hour,
 	}
-	inputId := uuid.New()
+	inputID := uuid.New()
 	login := "login"
 
-	tokenStr, err := authenticator.MakeJWT(inputId, login)
+	tokenStr, err := authenticator.MakeJWT(inputID, login)
 	assert.Nil(t, err, "unexpected error")
 
 	claims := &Claims{}
