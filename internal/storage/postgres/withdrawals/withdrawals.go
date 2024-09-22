@@ -41,7 +41,7 @@ func NewWithdrawalPGStorage(DBDsn string) *WithdrawalPGStorage {
 	}
 }
 
-func (wps *WithdrawalPGStorage) InitializeWithdrawalPGStorage(ctx context.Context, DB *sql.DB) error {
+func (wps *WithdrawalPGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 	if DB == nil {
 		newDB, err := sql.Open("pgx", wps.dsn)
 		if err != nil {

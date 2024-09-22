@@ -14,6 +14,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/netaddr"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
+	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type OrderSender struct {
@@ -22,36 +23,40 @@ type OrderSender struct {
 	client *resty.Client
 }
 
-func NewOrderSender(accrualAddr *netaddr.NetAddress, workersNum int) *OrderSender {
+func getClient(timeout time.Duration, retries int) *resty.Client {
+	return resty.New().
+	SetContentLength(true).
+	SetRetryCount(retries).
+	SetTimeout(timeout).
+	SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
+		// 429
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			retryAfterStr := resp.Header().Get("Retry-After")
+			if retryAfterStr == "" {
+				return 0, fmt.Errorf("no Retry-After header came from accrual service")
+			}
+			retryAfter, err := strconv.Atoi(retryAfterStr)
+			if err != nil {
+				return 0, fmt.Errorf("bad Retry-After header came from accrual service")
+			}
+			return time.Duration(retryAfter) * time.Second, nil
+		}
+
+		// timeout or 5**
+		if resp.IsError() || resp.StatusCode() >= 500 {
+			return 0, nil
+		}
+
+		// 4**
+		return 0, fmt.Errorf("bad Request")
+	})
+}
+
+func NewOrderSender(cfg *config.Config) *OrderSender {
 	return &OrderSender{
-		accrualAddr: accrualAddr,
-		workersNum: workersNum,
-		client: resty.New().
-			SetContentLength(true).
-			SetRetryCount(3).
-			SetTimeout(500 * time.Millisecond).
-			SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
-				// 429
-				if resp.StatusCode() == http.StatusTooManyRequests {
-					retryAfterStr := resp.Header().Get("Retry-After")
-					if retryAfterStr == "" {
-						return 0, fmt.Errorf("no Retry-After header came from accrual service")
-					}
-					retryAfter, err := strconv.Atoi(retryAfterStr)
-					if err != nil {
-						return 0, fmt.Errorf("bad Retry-After header came from accrual service")
-					}
-					return time.Duration(retryAfter) * time.Second, nil
-				}
-
-				// timeout or 5**
-				if resp.IsError() || resp.StatusCode() >= 500 {
-					return 0, nil
-				}
-
-				// 4**
-				return 0, fmt.Errorf("bad Request")
-			}),
+		accrualAddr: &cfg.AccuralSystemAddr,
+		workersNum: cfg.OrderSenderRateLimit,
+		client: getClient(cfg.OrderSenderAccrualTimeout, cfg.OrderSenderAccrualRetries),
 	}
 }
 

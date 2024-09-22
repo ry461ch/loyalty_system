@@ -22,10 +22,6 @@ func NewWithdrawalMemStorage() *WithdrawalMemStorage {
 	return &WithdrawalMemStorage{}
 }
 
-func (wms *WithdrawalMemStorage) InitializeWithdrawalMemStorage(ctx context.Context) error {
-	return nil
-}
-
 func (wms *WithdrawalMemStorage) InsertWithdrawal(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal, trx *transaction.Trx) error {
 	val, ok := wms.usersToWithdrawalsMap.Load(*inputWithdrawal.UserID)
 	if !ok {

@@ -17,14 +17,15 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
 	"github.com/ry461ch/loyalty_system/internal/models/netaddr"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
-	"github.com/ry461ch/loyalty_system/internal/components/sender"
-	"github.com/ry461ch/loyalty_system/internal/components/updater"
-	"github.com/ry461ch/loyalty_system/internal/components/getter"
+	"github.com/ry461ch/loyalty_system/internal/components/orders/sender"
+	"github.com/ry461ch/loyalty_system/internal/components/orders/updater"
+	"github.com/ry461ch/loyalty_system/internal/components/orders/getter"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/services/order"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
+	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type MockServerStorage struct {
@@ -136,11 +137,21 @@ func TestEnricher(t *testing.T) {
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	orderService := orderservice.NewOrderService(orderStorage, moneyService)
 
-	sender := ordersender.NewOrderSender(splitURL(srv.URL), 2)
-	updater := orderupdater.NewOrderUpdater(orderService, 2)
-	getter := ordergetter.NewOrderGetter(orderService)
+	cfg := config.Config{
+		OrderUpdaterRateLimit: 10,
+		OrderGetterOrdersLimit: 2,
+		OrderGetterRateLimit: 1,
+		OrderSenderRateLimit: 2,
+		OrderSenderAccrualTimeout: time.Millisecond * 500,
+		OrderSenderAccrualRetries: 3,
+		OrderEnricherChannelSize: 10,
+	}
 
-	enricher := NewOrderEnricher(*getter, *sender, *updater)
+	sender := ordersender.NewOrderSender(&cfg)
+	updater := orderupdater.NewOrderUpdater(orderService, &cfg)
+	getter := ordergetter.NewOrderGetter(orderService, &cfg)
+
+	enricher := NewOrderEnricher(getter, sender, updater, &cfg)
 
 	start := time.Now()
 	enricher.runIteration(context.TODO())

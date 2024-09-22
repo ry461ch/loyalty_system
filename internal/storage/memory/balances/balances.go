@@ -18,10 +18,6 @@ func NewBalanceMemStorage() *BalanceMemStorage {
 	return &BalanceMemStorage{}
 }
 
-func (bms *BalanceMemStorage) InitializeBalanceMemStorage(ctx context.Context) error {
-	return nil
-}
-
 func (bms *BalanceMemStorage) GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error) {
 	val, ok := bms.balances.Load(userID)
 	if !ok {

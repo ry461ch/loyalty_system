@@ -39,7 +39,7 @@ func NewBalancePGStorage(DBDsn string) *BalancePGStorage {
 	}
 }
 
-func (bps *BalancePGStorage) InitializeBalancePGStorage(ctx context.Context, DB *sql.DB) error {
+func (bps *BalancePGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 	if DB == nil {
 		newDB, err := sql.Open("pgx", bps.dsn)
 		if err != nil {

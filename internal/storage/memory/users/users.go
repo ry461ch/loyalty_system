@@ -17,10 +17,6 @@ func NewUserMemStorage() *UserMemStorage {
 	return &UserMemStorage{}
 }
 
-func (ums *UserMemStorage) InitializeUserMemStorage(ctx context.Context) error {
-	return nil
-}
-
 func (ums *UserMemStorage) InsertUser(ctx context.Context, inputUser *user.User, trx *transaction.Trx) error {
 	ums.users.Store(inputUser.Login, *inputUser)
 	return nil

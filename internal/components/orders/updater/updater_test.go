@@ -57,7 +57,10 @@ func TestUpdater(t *testing.T) {
 
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	orderService := orderservice.NewOrderService(orderStorage, moneyService)
-	updater := NewOrderUpdater(orderService, 2)
+	updater := OrderUpdater{
+		orderService: orderService,
+		workersNum: 2,
+	}
 
 	start := time.Now()
 	updater.UpdateOrders(context.TODO(), updatedOrdersChannel)

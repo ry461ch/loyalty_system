@@ -42,7 +42,7 @@ func NewOrderPGStorage(DBDsn string) *OrderPGStorage {
 	}
 }
 
-func (ops *OrderPGStorage) InitializeOrderPGStorage(ctx context.Context, DB *sql.DB) error {
+func (ops *OrderPGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 	if DB == nil {
 		newDB, err := sql.Open("pgx", ops.dsn)
 		if err != nil {

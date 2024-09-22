@@ -6,40 +6,40 @@ import (
 	"time"
 	"errors"
 
-	"github.com/ry461ch/loyalty_system/internal/components/sender"
-	"github.com/ry461ch/loyalty_system/internal/components/updater"
-	"github.com/ry461ch/loyalty_system/internal/components/getter"
+	"github.com/ry461ch/loyalty_system/internal/components/orders"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
+	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type OrderEnricher struct {
-	orderSender ordersender.OrderSender
-	orderUpdater orderupdater.OrderUpdater
-	orderGetter ordergetter.OrderGetter
-	iterationOrdersLimit int
+	orderSender ordercomponents.OrderSender
+	orderUpdater ordercomponents.OrderUpdater
+	orderGetter ordercomponents.OrderGetter
+	iterationChannelSize int
 	iterationTimeout time.Duration
 	iterationPeriod  time.Duration
 }
 
 func NewOrderEnricher(
-	orderGetter ordergetter.OrderGetter,
-	orderSender ordersender.OrderSender,
-	orderUpdater orderupdater.OrderUpdater,
+	orderGetter ordercomponents.OrderGetter,
+	orderSender ordercomponents.OrderSender,
+	orderUpdater ordercomponents.OrderUpdater,
+	cfg *config.Config,
 ) *OrderEnricher {
 	return &OrderEnricher{
 		orderGetter: orderGetter,
 		orderSender: orderSender,
 		orderUpdater: orderUpdater,
-		iterationOrdersLimit: 1000,
-		iterationTimeout: time.Minute,
-		iterationPeriod: time.Minute,
+		iterationChannelSize: cfg.OrderEnricherChannelSize,
+		iterationTimeout: cfg.OrderEnricherTimeout,
+		iterationPeriod: cfg.OrderEnricherPeriod,
 	}
 }
- 
+
 func (oe *OrderEnricher) runIteration(ctx context.Context) {
-	orderIDsChannel := make(chan string, oe.iterationOrdersLimit)
-	updatedOrders := make(chan order.Order, oe.iterationOrdersLimit)
+	orderIDsChannel := make(chan string, oe.iterationChannelSize)
+	updatedOrders := make(chan order.Order, oe.iterationChannelSize)
 
 	var wg sync.WaitGroup
 	wg.Add(3)

@@ -22,10 +22,6 @@ func NewOrderMemStorage() *OrderMemStorage {
 	return &OrderMemStorage{}
 }
 
-func (oms *OrderMemStorage) InitializeOrderMemStorage(ctx context.Context) error {
-	return nil
-}
-
 func (oms *OrderMemStorage) GetOrderUserID(ctx context.Context, orderID string) (*uuid.UUID, error) {
 	val, ok := oms.ordersToUsersMap.Load(orderID)
 	if !ok {

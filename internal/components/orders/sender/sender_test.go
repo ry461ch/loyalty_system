@@ -83,7 +83,11 @@ func TestSender(t *testing.T) {
 	updatedOrdersChannel := make(chan order.Order, 2)
 	defer close(updatedOrdersChannel)
 
-	sender := NewOrderSender(splitURL(srv.URL), 2)
+	sender := OrderSender{
+		accrualAddr: splitURL(srv.URL), 
+		workersNum: 2,
+		client: getClient(time.Millisecond * 500, 3),
+	}
 
 	start := time.Now()
 	sender.GetUpdatedOrders(context.TODO(), orderIDsChannel, updatedOrdersChannel)

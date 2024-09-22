@@ -39,7 +39,7 @@ func NewUserPGStorage(DBDsn string) *UserPGStorage {
 	}
 }
 
-func (ups *UserPGStorage) InitializeUserPGStorage(ctx context.Context, DB *sql.DB) error {
+func (ups *UserPGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 	if DB == nil {
 		newDB, err := sql.Open("pgx", ups.dsn)
 		if err != nil {

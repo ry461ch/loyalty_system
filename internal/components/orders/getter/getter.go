@@ -7,6 +7,7 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/services"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
+	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type OrderGetter struct {
@@ -15,13 +16,11 @@ type OrderGetter struct {
 	rateLimit int
 }
 
-func NewOrderGetter(
-	orderService services.OrderService,
-) *OrderGetter {
+func NewOrderGetter(orderService services.OrderService, cfg *config.Config) *OrderGetter {
 	return &OrderGetter{
 		orderService: orderService,
-		getOrdersLimit: 1000,
-		rateLimit: 1,
+		getOrdersLimit: cfg.OrderGetterOrdersLimit,
+		rateLimit: cfg.OrderGetterRateLimit,
 	}
 }
 
