@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/resty.v1"
 
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
@@ -75,7 +75,7 @@ func TestGetBalance(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			moneyService.AddAccrual(context.TODO(), existingUserID, existingBalance.Current+existingBalance.Withdrawn, nil)
+			balanceStorage.AddBalance(context.TODO(), existingUserID, existingBalance.Current+existingBalance.Withdrawn, nil)
 			moneyService.Withdraw(context.TODO(), &existingWithdrawal)
 
 			resp, _ := client.R().
@@ -145,7 +145,7 @@ func TestGetWithdrawals(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			moneyService.AddAccrual(context.TODO(), existingUserID, existingWithdrawal1.Sum+existingWithdrawal2.Sum, nil)
+			balanceStorage.AddBalance(context.TODO(), existingUserID, existingWithdrawal1.Sum+existingWithdrawal2.Sum, nil)
 			err := moneyService.Withdraw(context.TODO(), &existingWithdrawal1)
 			assert.Nil(t, err)
 			err = moneyService.Withdraw(context.TODO(), &existingWithdrawal2)
@@ -279,7 +279,7 @@ func TestPostWithdraw(t *testing.T) {
 			defer srv.Close()
 			client := resty.New()
 
-			moneyService.AddAccrual(context.TODO(), existingUserID, existingBalanceCurrent+existingWithdrawal.Sum, nil)
+			balanceStorage.AddBalance(context.TODO(), existingUserID, existingBalanceCurrent+existingWithdrawal.Sum, nil)
 			moneyService.Withdraw(context.TODO(), &existingWithdrawal)
 
 			var req []byte

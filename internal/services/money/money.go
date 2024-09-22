@@ -27,7 +27,7 @@ func NewMoneyService(balanceStorage storage.BalanceStorage, withdrawalStorage st
 }
 
 func (ms *MoneyService) Withdraw(ctx context.Context, inputWithdrawal *withdrawal.Withdrawal) error {
-	if !orderhelper.ValidateOrderID(inputWithdrawal.OrderID) {
+	if !orderhelpers.ValidateOrderID(inputWithdrawal.OrderID) {
 		return exceptions.NewOrderBadIDFormatError()
 	}
 	if inputWithdrawal.Sum <= 0 {
@@ -79,26 +79,17 @@ func (ms *MoneyService) Withdraw(ctx context.Context, inputWithdrawal *withdrawa
 	return err
 }
 
-func (ms *MoneyService) AddAccrual(ctx context.Context, userID uuid.UUID, amount float64, tx *transaction.Trx) error {
-	if amount <= 0 {
-		return exceptions.NewBalanceBadAmountFormatError()
-	}
-
-	if tx == nil {
-		var err error
-		tx, err = ms.balanceStorage.BeginTx(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
-	return ms.balanceStorage.AddBalance(ctx, userID, amount, tx)
-}
-
 func (ms *MoneyService) GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error) {
 	return ms.balanceStorage.GetBalance(ctx, userID)
 }
 
 func (ms *MoneyService) GetWithdrawals(ctx context.Context, userID uuid.UUID) ([]withdrawal.Withdrawal, error) {
 	return ms.withdrawalStorage.GetWithdrawals(ctx, userID)
+}
+
+func (ms *MoneyService) AddAccrual(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error {
+	if amount <= 0 {
+		return exceptions.NewBalanceBadAmountFormatError()
+	}
+	return ms.balanceStorage.AddBalance(ctx, userID, amount, trx)
 }

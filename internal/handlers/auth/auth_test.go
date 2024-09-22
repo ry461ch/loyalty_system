@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/resty.v1"
+	"github.com/go-resty/resty/v2"
 
 	"github.com/ry461ch/loyalty_system/internal/models/user"
 	"github.com/ry461ch/loyalty_system/internal/services/user"

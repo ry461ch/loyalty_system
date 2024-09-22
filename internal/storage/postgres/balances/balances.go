@@ -89,14 +89,6 @@ func (bps *BalancePGStorage) ReduceBalance(ctx context.Context, userID uuid.UUID
 		WHERE user_id = $1;
 	`
 
-	if tx == nil {
-		var err error
-		tx, err = bps.BeginTx(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
 	_, err := tx.ExecContext(ctx, spendAmountQuery, userID, amount)
 	return err
 }
@@ -111,14 +103,7 @@ func (bps *BalancePGStorage) AddBalance(ctx context.Context, userID uuid.UUID, a
 			updated_at = CURRENT_TIMESTAMP
 		;
 	`
-	if tx == nil {
-		var err error
-		tx, err = bps.BeginTx(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
+	
 	_, err := tx.ExecContext(ctx, insertBalanceQuery, userID, amount)
 	return err
 }

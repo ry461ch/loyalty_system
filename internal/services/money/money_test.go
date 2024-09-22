@@ -115,64 +115,6 @@ func TestGetBalance(t *testing.T) {
 	}
 }
 
-func TestAddAccrual(t *testing.T) {
-	existingUserID := uuid.New()
-	existingBalance := balance.Balance{
-		Current:   500,
-		Withdrawn: 300,
-	}
-
-	testCases := []struct {
-		testName        string
-		userID          uuid.UUID
-		accrual         float64
-		expectedBalance *balance.Balance
-	}{
-		{
-			testName: "existing user",
-			userID:   existingUserID,
-			accrual:  200,
-			expectedBalance: &balance.Balance{
-				Current:   existingBalance.Current + 200,
-				Withdrawn: existingBalance.Withdrawn,
-			},
-		},
-		{
-			testName: "new user",
-			userID:   uuid.New(),
-			accrual:  200,
-			expectedBalance: &balance.Balance{
-				Current:   200,
-				Withdrawn: 0,
-			},
-		},
-		{
-			testName:        "bad amount",
-			userID:          uuid.New(),
-			accrual:         0,
-			expectedBalance: nil,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
-			balanceStorage := balancememstorage.NewBalanceMemStorage()
-			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
-			balanceStorage.AddBalance(context.TODO(), existingUserID, existingBalance.Current+existingBalance.Withdrawn, nil)
-			balanceStorage.ReduceBalance(context.TODO(), existingUserID, existingBalance.Withdrawn, nil)
-
-			service := NewMoneyService(balanceStorage, withdrawalStorage)
-			err := service.AddAccrual(context.TODO(), tc.userID, tc.accrual, nil)
-			if tc.expectedBalance != nil {
-				balanceInDB, _ := balanceStorage.GetBalance(context.TODO(), tc.userID)
-				assert.Equal(t, *tc.expectedBalance, *balanceInDB, "balances don't match")
-			} else {
-				assert.ErrorIs(t, err, exceptions.NewBalanceBadAmountFormatError(), "exceptions don't match")
-			}
-		})
-	}
-}
-
 func TestWithdraw(t *testing.T) {
 	existingUserID := uuid.New()
 	existingBalance := balance.Balance{
@@ -275,6 +217,64 @@ func TestWithdraw(t *testing.T) {
 				assert.Equal(t, tc.expectedBalance, *balanceInDB, "balances don't match")
 			} else {
 				assert.ErrorIs(t, err, tc.expectedError, "exceptions don't match")
+			}
+		})
+	}
+}
+
+func TestAddAccrual(t *testing.T) {
+	existingUserID := uuid.New()
+	existingBalance := balance.Balance{
+		Current:   500,
+		Withdrawn: 300,
+	}
+
+	testCases := []struct {
+		testName        string
+		userID          uuid.UUID
+		accrual         float64
+		expectedBalance *balance.Balance
+	}{
+		{
+			testName: "existing user",
+			userID:   existingUserID,
+			accrual:  200,
+			expectedBalance: &balance.Balance{
+				Current:   existingBalance.Current + 200,
+				Withdrawn: existingBalance.Withdrawn,
+			},
+		},
+		{
+			testName: "new user",
+			userID:   uuid.New(),
+			accrual:  200,
+			expectedBalance: &balance.Balance{
+				Current:   200,
+				Withdrawn: 0,
+			},
+		},
+		{
+			testName:        "bad amount",
+			userID:          uuid.New(),
+			accrual:         0,
+			expectedBalance: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			balanceStorage := balancememstorage.NewBalanceMemStorage()
+			withdrawalStorage := withdrawalmemstorage.NewWithdrawalMemStorage()
+			balanceStorage.AddBalance(context.TODO(), existingUserID, existingBalance.Current+existingBalance.Withdrawn, nil)
+			balanceStorage.ReduceBalance(context.TODO(), existingUserID, existingBalance.Withdrawn, nil)
+
+			service := NewMoneyService(balanceStorage, withdrawalStorage)
+			err := service.AddAccrual(context.TODO(), tc.userID, tc.accrual, nil)
+			if tc.expectedBalance != nil {
+				balanceInDB, _ := balanceStorage.GetBalance(context.TODO(), tc.userID)
+				assert.Equal(t, *tc.expectedBalance, *balanceInDB, "balances don't match")
+			} else {
+				assert.ErrorIs(t, err, exceptions.NewBalanceBadAmountFormatError(), "exceptions don't match")
 			}
 		})
 	}

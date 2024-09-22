@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"time"
+	"slices"
 
 	"github.com/google/uuid"
 
@@ -52,37 +53,46 @@ func (oms *OrderMemStorage) InsertOrder(ctx context.Context, userID uuid.UUID, o
 	return nil
 }
 
-func (oms *OrderMemStorage) UpdateOrder(ctx context.Context, newOrder *order.Order, trx *transaction.Trx) error {
+func (oms *OrderMemStorage) UpdateOrder(ctx context.Context, newOrder *order.Order, trx *transaction.Trx) (*uuid.UUID, error) {
 	val, ok := oms.ordersToUsersMap.Load(newOrder.ID)
 	if !ok {
-		return exceptions.NewOrderNotFoundError()
+		return nil, exceptions.NewOrderNotFoundError()
 	}
 	userID := val.(uuid.UUID)
 
 	val, ok = oms.usersToOrdersMap.Load(userID)
 	if !ok {
-		return exceptions.NewOrderNotFoundError()
+		return nil, exceptions.NewOrderNotFoundError()
 	}
 	userOrders := val.(map[string]order.Order)
 	userOrders[newOrder.ID] = *newOrder
 	oms.usersToOrdersMap.Store(userID, userOrders)
-	return nil
+	return &userID, nil
 }
 
-func (oms *OrderMemStorage) GetWaitingOrderIDs(ctx context.Context) ([]string, error) {
-	var orderIDs []string
+func (oms *OrderMemStorage) GetWaitingOrderIDs(ctx context.Context, limit int, offset int) ([]string, error) {
+	var waitingOrders []order.Order
 	oms.usersToOrdersMap.Range(func(key any, val any) bool {
 		userOrders := val.(map[string]order.Order)
-		for orderID, userOrder := range userOrders {
+		for _, userOrder := range userOrders {
 			if userOrder.Status == order.NEW || userOrder.Status == order.PROCESSING {
-				orderIDs = append(orderIDs, orderID)
+				waitingOrders = append(waitingOrders, userOrder)
 			}
 		}
 
 		return true
 	})
 
-	return orderIDs, nil
+	slices.SortFunc(waitingOrders, func(left, right order.Order) int {
+		return right.CreatedAt.Compare(left.CreatedAt)
+	})
+
+	resultOrders := waitingOrders[min(offset, len(waitingOrders)):min(offset + limit, len(waitingOrders))]
+	var resultOrderIDs []string
+	for _, resultOrder := range resultOrders {
+		resultOrderIDs = append(resultOrderIDs, resultOrder.ID)
+	}
+	return resultOrderIDs, nil
 }
 
 func (oms *OrderMemStorage) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {
@@ -96,6 +106,9 @@ func (oms *OrderMemStorage) GetUserOrders(ctx context.Context, userID uuid.UUID)
 	for _, userOrder := range userOrders {
 		ordersList = append(ordersList, userOrder)
 	}
+	slices.SortFunc(ordersList, func(left, right order.Order) int {
+		return right.CreatedAt.Compare(left.CreatedAt)
+	})
 	return ordersList, nil
 }
 

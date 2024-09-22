@@ -1,4 +1,4 @@
-package orderhelper
+package orderhelpers
 
 import (
 	"testing"

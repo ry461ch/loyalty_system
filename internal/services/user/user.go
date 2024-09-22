@@ -46,8 +46,10 @@ func (us *UserService) Register(ctx context.Context, inputUser *user.InputUser) 
 
 	err = us.userStorage.InsertUser(ctx, &newUser, tx)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
+	tx.Commit()
 	return us.authenticator.MakeJWT(newUser.ID, newUser.Login)
 }
 

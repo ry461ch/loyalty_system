@@ -11,11 +11,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/resty.v1"
+	"github.com/go-resty/resty/v2"
 
-	"github.com/ry461ch/loyalty_system/internal/models/order"
-	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/services/order"
+	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
@@ -36,21 +35,9 @@ type outputOrder struct {
 }
 
 func TestGetOrders(t *testing.T) {
-	accrual := float64(500)
 	existingUserID := uuid.New()
-	existingOrders := []order.Order{
-		{
-			Accrual:   &accrual,
-			Status:    order.PROCESSED,
-			ID:        "1115",
-			CreatedAt: time.Now(),
-		},
-		{
-			Status:    order.NEW,
-			ID:        "1321",
-			CreatedAt: time.Now(),
-		},
-	}
+	existingOrder1ID := "1115"
+	existingOrder2ID := "1321"
 
 	testCases := []struct {
 		testName          string
@@ -85,10 +72,8 @@ func TestGetOrders(t *testing.T) {
 			defer srv.Close()
 			client := resty.New()
 
-			for _, existingOrder := range existingOrders {
-				orderService.InsertOrder(context.TODO(), existingUserID, existingOrder.ID)
-				orderService.UpdateOrder(context.TODO(), &existingOrder)
-			}
+			orderService.InsertOrder(context.TODO(), existingUserID, existingOrder1ID)
+			orderService.InsertOrder(context.TODO(), existingUserID, existingOrder2ID)
 
 			resp, _ := client.R().
 				SetHeader("Content-Type", "application/json").
@@ -103,7 +88,6 @@ func TestGetOrders(t *testing.T) {
 			var respOrders []outputOrder
 			json.Unmarshal(resp.Body(), &respOrders)
 			assert.Equal(t, tc.expectedOrdersNum, len(respOrders), "num of orders not equal")
-
 		})
 	}
 }

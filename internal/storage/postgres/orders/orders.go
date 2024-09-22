@@ -86,26 +86,19 @@ func (ops *OrderPGStorage) InsertOrder(ctx context.Context, userID uuid.UUID, or
 		INSERT INTO content.orders (id, user_id) VALUES ($1, $2);
 	`
 
-	if tx == nil {
-		var err error
-		tx, err = ops.BeginTx(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
 	_, err := tx.ExecContext(ctx, insertOrderQuery, orderID, userID)
 	return err
 }
 
-func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, tx *transaction.Trx) error {
+func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, tx *transaction.Trx) (*uuid.UUID, error) {
 	updateOrderQuery := `
 		UPDATE content.orders
 		SET
 			status = $2,
 			accrual = $3,
 			updated_at = CURRENT_TIMESTAMP
-		WHERE id = $1;
+		WHERE id = $1
+		RETURNING user_id;
 	`
 	var accrual sql.NullFloat64
 	if order.Accrual != nil {
@@ -115,27 +108,26 @@ func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, 
 		}
 	}
 
-	if tx == nil {
-		var err error
-		tx, err = ops.BeginTx(ctx)
-		if err != nil {
-			return err
-		}
+	row := tx.QueryRowContext(ctx, updateOrderQuery, order.ID, order.Status, accrual)
+	var userID uuid.UUID
+	err := row.Scan(&userID)
+	if err != nil {
+		return nil, err
 	}
 
-	_, err := tx.ExecContext(ctx, updateOrderQuery, order.ID, order.Status, accrual)
-	return err
+	return &userID, nil
 }
 
-func (ops *OrderPGStorage) GetWaitingOrderIDs(ctx context.Context) ([]string, error) {
+func (ops *OrderPGStorage) GetWaitingOrderIDs(ctx context.Context, limit int, offset int) ([]string, error) {
 	getOrdersFromDB := `
 		SELECT id
 		FROM content.orders
 		WHERE status = 'NEW' OR status = 'PROCESSING'
-		ORDER BY created_at ASC;
+		ORDER BY created_at ASC
+		LIMIT $1 OFFSET $2;
 	`
 
-	rows, err := ops.DB.QueryContext(ctx, getOrdersFromDB)
+	rows, err := ops.DB.QueryContext(ctx, getOrdersFromDB, limit, offset)
 	if err != nil {
 		return nil, err
 	}

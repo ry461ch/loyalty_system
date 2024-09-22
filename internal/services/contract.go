@@ -20,12 +20,13 @@ type UserService interface {
 type MoneyService interface {
 	GetWithdrawals(ctx context.Context, userID uuid.UUID) ([]withdrawal.Withdrawal, error)
 	GetBalance(ctx context.Context, userID uuid.UUID) (*balance.Balance, error)
-	AddAccrual(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error
 	Withdraw(ctx context.Context, withdrawal *withdrawal.Withdrawal) error
+	AddAccrual(ctx context.Context, userID uuid.UUID, amount float64, trx *transaction.Trx) error
 }
 
 type OrderService interface {
 	GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
 	InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error
-	UpdateOrder(ctx context.Context, updatedOrder *order.Order) error
+	UpdateOrder(ctx context.Context, inputOrder *order.Order) error
+	GetWaitingOrderIDs(ctx context.Context, limit, offset int) ([]string, error)
 }

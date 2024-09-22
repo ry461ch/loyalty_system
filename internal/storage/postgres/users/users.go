@@ -84,14 +84,6 @@ func (ups *UserPGStorage) InsertUser(ctx context.Context, newUser *user.User, tx
 		INSERT INTO content.users (id, login, pass_hash) VALUES ($1, $2, $3);
 	`
 
-	if tx == nil {
-		var err error
-		tx, err = ups.BeginTx(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
 	_, err := tx.ExecContext(ctx, insertUserQuery, newUser.ID, newUser.Login, newUser.PasswordHash)
 	return err
 }

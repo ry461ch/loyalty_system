@@ -109,17 +109,17 @@ func TestGetUserID(t *testing.T) {
 	}
 }
 
-func TestGetOrders(t *testing.T) {
+func TestGetUserOrders(t *testing.T) {
 	accrual := float64(500)
 	existingUserID := uuid.New()
-	existingOrders := map[string]order.Order{
-		"1115": {
+	existingOrders := []order.Order{
+		{
 			ID:        "1115",
 			Status:    order.PROCESSED,
 			CreatedAt: time.Now().UTC(),
 			Accrual:   &accrual,
 		},
-		"1321": {
+		{
 			ID:        "1321",
 			Status:    order.INVALID,
 			CreatedAt: time.Now().UTC(),
@@ -146,10 +146,12 @@ func TestGetOrders(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			storage := NewOrderMemStorage()
-			for existingOrderID := range existingOrders {
-				storage.ordersToUsersMap.Store(existingOrderID, existingUserID)
+			existingOrdersMap := map[string]order.Order{}
+			for _, existingOrder := range existingOrders {
+				storage.ordersToUsersMap.Store(existingOrder.ID, existingUserID)
+				existingOrdersMap[existingOrder.ID] = existingOrder
 			}
-			storage.usersToOrdersMap.Store(existingUserID, existingOrders)
+			storage.usersToOrdersMap.Store(existingUserID, existingOrdersMap)
 
 			userOrders, _ := storage.GetUserOrders(context.TODO(), tc.userID)
 			assert.Equal(t, tc.expectedOrdersNum, len(userOrders), "num of orders not equal")
@@ -199,10 +201,46 @@ func TestGetWaitingOrders(t *testing.T) {
 	storage.usersToOrdersMap.Store(existingUser1ID, existingOrdersUser1)
 	storage.usersToOrdersMap.Store(existingUser2ID, existingOrdersUser2)
 
-	waitingOrderIDs, _ := storage.GetWaitingOrderIDs(context.TODO())
-	assert.Equal(t, len(expectedOrderIDs), len(waitingOrderIDs), "num of orders don't match")
-	for _, userOrderID := range waitingOrderIDs {
-		assert.Contains(t, expectedOrderIDs, userOrderID, "user orders contains not waiting order id")
+	testCases := []struct {
+		testName          string
+		limit             int
+		offset 			  int
+		expectedOrdersNum int
+	}{
+		{
+			testName:          "all waiting orders",
+			limit:            3,
+			offset: 		  0,
+			expectedOrdersNum: 2,
+		},
+		{
+			testName:          "last waiting order",
+			limit:            3,
+			offset: 		  1,
+			expectedOrdersNum: 1,
+		},
+		{
+			testName:          "first waiting order",
+			limit:            1,
+			offset: 		  0,
+			expectedOrdersNum: 1,
+		},
+		{
+			testName:          "first waiting order",
+			limit:            2,
+			offset: 		  2,
+			expectedOrdersNum: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			waitingOrderIDs, _ := storage.GetWaitingOrderIDs(context.TODO(), tc.limit, tc.offset)
+			assert.Equal(t, tc.expectedOrdersNum, len(waitingOrderIDs), "num of orders don't match")
+			for _, userOrderID := range waitingOrderIDs {
+				assert.Contains(t, expectedOrderIDs, userOrderID, "user orders contains not waiting order id")
+			}
+		})
 	}
 }
 
@@ -254,13 +292,14 @@ func TestUpdateOrder(t *testing.T) {
 				},
 			)
 
-			err := storage.UpdateOrder(context.TODO(), &tc.newOrder, nil)
+			userID, err := storage.UpdateOrder(context.TODO(), &tc.newOrder, nil)
 			assert.ErrorIs(t, tc.expectedErr, err, "errors don't match")
 			val, _ := storage.usersToOrdersMap.Load(existingUserID)
 			userOrders := val.(map[string]order.Order)
 			if tc.expectedErr != nil {
 				assert.Equal(t, existingOrder, userOrders[existingOrder.ID], "order was updated, but shouldn't")
 			} else {
+				assert.Equal(t, existingUserID, *userID, "user_ids not equal")
 				assert.Equal(t, tc.newOrder, userOrders[existingOrder.ID], "order was updated, but shouldn't")
 			}
 		})

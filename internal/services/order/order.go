@@ -29,12 +29,12 @@ func (os *OrderService) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]
 	return os.orderStorage.GetUserOrders(ctx, userID)
 }
 
-func (os *OrderService) GetWaitingOrderIDs(ctx context.Context) ([]string, error) {
-	return os.orderStorage.GetWaitingOrderIDs(ctx)
+func (os *OrderService) GetWaitingOrderIDs(ctx context.Context, limit, offset int) ([]string, error) {
+	return os.orderStorage.GetWaitingOrderIDs(ctx, limit, offset)
 }
 
 func (os *OrderService) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error {
-	if !orderhelper.ValidateOrderID(orderID) {
+	if !orderhelpers.ValidateOrderID(orderID) {
 		return exceptions.NewOrderBadIDFormatError()
 	}
 
@@ -53,13 +53,18 @@ func (os *OrderService) InsertOrder(ctx context.Context, userID uuid.UUID, order
 	if err != nil {
 		return err
 	}
-	return os.orderStorage.InsertOrder(ctx, userID, orderID, tx)
+	err = os.orderStorage.InsertOrder(ctx, userID, orderID, tx)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
-func (os *OrderService) UpdateOrder(ctx context.Context, updatedOrder *order.Order) error {
-	orderUserID, err := os.orderStorage.GetOrderUserID(ctx, updatedOrder.ID)
-	if err != nil {
-		return err
+func (os *OrderService) UpdateOrder(ctx context.Context, inputOrder *order.Order) error {
+	if inputOrder == nil {
+		return errors.New("invalid input order")
 	}
 
 	tx, err := os.orderStorage.BeginTx(ctx)
@@ -67,14 +72,27 @@ func (os *OrderService) UpdateOrder(ctx context.Context, updatedOrder *order.Ord
 		return err
 	}
 
-	err = os.orderStorage.UpdateOrder(ctx, updatedOrder, tx)
+	userID, err := os.orderStorage.UpdateOrder(ctx, inputOrder, tx)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+	if userID == nil {
+		tx.Rollback()
+		return errors.New("update order returns empty userID")
+	}
 
-	if updatedOrder.Accrual == nil || updatedOrder.Status != order.PROCESSED {
+	if inputOrder.Accrual == nil {
+		tx.Commit()
 		return nil
 	}
 
-	return os.moneyService.AddAccrual(ctx, *orderUserID, *updatedOrder.Accrual, tx)
+	err = os.moneyService.AddAccrual(ctx, *userID, *inputOrder.Accrual, tx)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	
+	tx.Commit()
+	return nil
 }
