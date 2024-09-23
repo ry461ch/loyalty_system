@@ -26,15 +26,20 @@ func NewOrderGetter(orderService services.OrderService, cfg *config.Config) *Ord
 
 func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDsChannel chan<- string, createdAt *time.Time) (*time.Time, error) {
 	waitingOrders, err := og.orderService.GetWaitingOrders(ctx, og.getOrdersLimit, createdAt)
+	if createdAt != nil {
+		logging.Logger.Infof("Order Getter: got %d orders with createdAt less than %s", len(waitingOrders), createdAt.String())
+	} else {
+		logging.Logger.Infof("Order Getter: got %d orders without input createdAt", len(waitingOrders))
+	}
+
 	if err != nil {
-		logging.Logger.Warnf("OrderGetter: exceptions occured while getting waiting orders: %s", err.Error())
 		return nil, err
 	}
 
 	for _, waitingOrder := range waitingOrders {
 		select {
 		case <-ctx.Done():
-			return nil, errors.New("graceful shutdown getter waiting orders")
+			return nil, errors.New("graceful shutdown")
 		case orderIDsChannel <- waitingOrder.ID:
 		}
 	}
@@ -47,6 +52,7 @@ func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDs
 }
 
 func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string) error {
+	logging.Logger.Infof("Order Getter: initiated")
 	var createdAt *time.Time
 	ticker := time.NewTicker(time.Second / time.Duration(og.rateLimit))
 	defer ticker.Stop()
@@ -59,11 +65,13 @@ func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel c
 			var err error
 			createdAt, err = og.getWaitingOrderIDsIteration(ctx, orderIDsChannel, createdAt)
 			if err != nil {
+				logging.Logger.Errorf("Order Getter: exceptions occured while getting waiting orders: %s", err.Error())
 				return err
 			}
 		}
 
 		if createdAt == nil {
+			logging.Logger.Infof("Order Getter: successfully ending")
 			return nil
 		}
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/services"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type OrderHandlers struct {
@@ -25,6 +26,7 @@ func NewOrderHandlers(orderService services.OrderService) *OrderHandlers {
 func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
+		logging.Logger.Errorf("New order: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -49,6 +51,7 @@ func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		default:
+			logging.Logger.Errorf("New order: internal error: %v", err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -65,6 +68,7 @@ func (oh *OrderHandlers) GetOrders(res http.ResponseWriter, req *http.Request) {
 
 	orders, err := oh.orderService.GetUserOrders(req.Context(), userID)
 	if err != nil {
+		logging.Logger.Errorf("Get orders: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -76,6 +80,7 @@ func (oh *OrderHandlers) GetOrders(res http.ResponseWriter, req *http.Request) {
 
 	resp, err := json.Marshal(orders)
 	if err != nil {
+		logging.Logger.Errorf("Get orders: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

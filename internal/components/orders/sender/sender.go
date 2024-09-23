@@ -63,9 +63,17 @@ func NewOrderSender(cfg *config.Config) *OrderSender {
 func (os *OrderSender) getOrderFromAccrual(ctx context.Context, orderID string) (*order.Order, error) {
 	serverURL := "http://" + os.accrualAddr.Host + ":" + strconv.FormatInt(os.accrualAddr.Port, 10)
 
-	resp, err := os.client.R().SetContext(ctx).Post(serverURL + "/api/orders/" + orderID)
+	resp, err := os.client.R().SetContext(ctx).Get(serverURL + "/api/orders/" + orderID)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode() > 400 && resp.StatusCode() < 500 {
+		return nil, fmt.Errorf("bad request, accrual returned %d", resp.StatusCode())
+	}
+
+	if resp.StatusCode() > 500 {
+		return nil, fmt.Errorf("accrual server unavailable")
 	}
 
 	if resp.StatusCode() == http.StatusNoContent {
@@ -88,14 +96,14 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 	for {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("order sender: graceful shutdown worker %d", workerID)
+			return fmt.Errorf("graceful shutdown worker %d", workerID)
 		case orderID := <-orderIDsChannel:
 			if orderID == "" {
 				return nil
 			}
 			updatedOrder, err := os.getOrderFromAccrual(ctx, orderID)
 			if err != nil {
-				logging.Logger.Warnf("OrderSender: exceptions occured for orderID: %s: %s", orderID, err.Error())
+				logging.Logger.Warnf("Order Sender: exceptions occured for orderID: %s: %v", orderID, err)
 				break
 			}
 			if updatedOrder == nil {
@@ -104,7 +112,7 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 
 			select {
 			case <-ctx.Done():
-				return fmt.Errorf("order sender: graceful shutdown worker %d", workerID)
+				return fmt.Errorf("graceful shutdown worker %d", workerID)
 			case updatedOrders <- *updatedOrder:
 				break
 			}
@@ -112,20 +120,25 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("order sender: graceful shutdown worker %d", workerID)
+			return fmt.Errorf("graceful shutdown worker %d", workerID)
 		case <-ticker.C:
 		}
 	}
 }
 
 func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) error {
+	logging.Logger.Infof("Order Sender: init with %d workers", os.workersNum)
 	wg := new(errgroup.Group)
 
 	for w := 0; w < os.workersNum; w++ {
 		workerID := w
 		wg.Go(
 			func() error {
-				return os.getOrderFromAccrualWorker(ctx, workerID, orderIDsChannel, updatedOrders)
+				err := os.getOrderFromAccrualWorker(ctx, workerID, orderIDsChannel, updatedOrders)
+				if err != nil {
+					logging.Logger.Errorf("Order Sender: %v", err)
+				}
+				return err
 			},
 		)
 	}
@@ -134,5 +147,6 @@ func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-c
 		return err
 	}
 
+	logging.Logger.Info("Order Sender: successfully handled all orders")
 	return nil
 }

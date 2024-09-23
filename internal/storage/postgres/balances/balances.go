@@ -21,8 +21,8 @@ func getDDL() string {
 	return `
 		CREATE TABLE IF NOT EXISTS content.balances (
 			user_id UUID PRIMARY KEY,
-			current	INTEGER NOT NULL DEFAULT 0,
-			withdrawn INTEGER NOT NULL DEFAULT 0,
+			current	DOUBLE PRECISION NOT NULL DEFAULT 0,
+			withdrawn DOUBLE PRECISION NOT NULL DEFAULT 0,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
@@ -83,8 +83,8 @@ func (bps *BalancePGStorage) ReduceBalance(ctx context.Context, userID uuid.UUID
 	spendAmountQuery := `
 		UPDATE content.balances
 		SET
-			current = current - $2,
-			withdrawn = withdraw + $2,
+			current = balances.current - $2,
+			withdrawn = balances.withdraw + $2,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE user_id = $1;
 	`
@@ -99,7 +99,7 @@ func (bps *BalancePGStorage) AddBalance(ctx context.Context, userID uuid.UUID, a
 		VALUES ($1, $2)
 		ON CONFLICT (user_id)
 		DO UPDATE SET
-			current = current + $2,
+			current = balances.current + $2,
 			updated_at = CURRENT_TIMESTAMP
 		;
 	`

@@ -15,6 +15,7 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/models/netaddr"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type MockServerStorage struct {
@@ -57,7 +58,7 @@ func (m *MockServerStorage) handler(res http.ResponseWriter, req *http.Request) 
 
 func (m *MockServerStorage) mockRouter() chi.Router {
 	router := chi.NewRouter()
-	router.Post("/api/orders/{order_id:[0-9]+}", m.handler)
+	router.Get("/api/orders/{order_id:[0-9]+}", m.handler)
 	return router
 }
 
@@ -69,6 +70,7 @@ func splitURL(URL string) *netaddr.NetAddress {
 }
 
 func TestSender(t *testing.T) {
+	logging.Initialize("INFO")
 	serverStorage := MockServerStorage{}
 	router := serverStorage.mockRouter()
 	srv := httptest.NewServer(router)

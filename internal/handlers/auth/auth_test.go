@@ -16,6 +16,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/services/user"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/users"
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 func mockRouter(authHandlers *AuthHandlers) chi.Router {
@@ -26,6 +27,7 @@ func mockRouter(authHandlers *AuthHandlers) chi.Router {
 }
 
 func TestRegister(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUser := user.InputUser{
 		Login:    "test",
 		Password: "test",
@@ -90,6 +92,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUser := user.InputUser{
 		Login:    "test",
 		Password: "test",

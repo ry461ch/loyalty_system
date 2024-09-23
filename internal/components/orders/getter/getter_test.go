@@ -14,9 +14,11 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 func TestGetter(t *testing.T) {
+	logging.Initialize("INFO")
 	expectedOrders := []order.Order{
 		{
 			ID:     "1115",

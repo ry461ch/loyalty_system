@@ -15,9 +15,11 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 func TestUpdater(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUserID := uuid.New()
 	accrual := float64(200)
 	expectedOrders := []order.Order{

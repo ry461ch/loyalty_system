@@ -18,6 +18,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 func mockRouter(moneyHandlers *MoneyHandlers) chi.Router {
@@ -29,6 +30,7 @@ func mockRouter(moneyHandlers *MoneyHandlers) chi.Router {
 }
 
 func TestGetBalance(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUserID := uuid.New()
 	existingBalance := balance.Balance{
 		Current:   200,
@@ -98,6 +100,7 @@ type outputWithdrawal struct {
 }
 
 func TestGetWithdrawals(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUserID := uuid.New()
 	existingWithdrawalID1 := uuid.New()
 	existingWithdrawalID2 := uuid.New()
@@ -172,6 +175,7 @@ type InputWithdrawal struct {
 }
 
 func TestPostWithdraw(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUserID := uuid.New()
 	existingBalanceCurrent := float64(200)
 	existingWithdrawalID := uuid.New()

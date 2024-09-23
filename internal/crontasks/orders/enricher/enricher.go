@@ -38,6 +38,7 @@ func NewOrderEnricher(
 }
 
 func (oe *OrderEnricher) runIteration(ctx context.Context) {
+	logging.Logger.Infof("Order Enricher: start iteration")
 	orderIDsChannel := make(chan string, oe.iterationChannelSize)
 	updatedOrders := make(chan order.Order, oe.iterationChannelSize)
 
@@ -47,7 +48,7 @@ func (oe *OrderEnricher) runIteration(ctx context.Context) {
 	go func() {
 		err := oe.orderGetter.GetWaitingOrderIDs(ctx, orderIDsChannel)
 		if err != nil {
-			logging.Logger.Error("error occured in order getter")
+			logging.Logger.Errorf("Order Enricher: error occured in order getter: %v", err)
 		}
 		close(orderIDsChannel)
 		wg.Done()
@@ -56,7 +57,7 @@ func (oe *OrderEnricher) runIteration(ctx context.Context) {
 	go func() {
 		err := oe.orderSender.GetUpdatedOrders(ctx, orderIDsChannel, updatedOrders)
 		if err != nil {
-			logging.Logger.Error("error occured in order sender")
+			logging.Logger.Errorf("Order Enricher: error occured in order sender: %v", err)
 		}
 		close(updatedOrders)
 		wg.Done()
@@ -65,15 +66,17 @@ func (oe *OrderEnricher) runIteration(ctx context.Context) {
 	go func() {
 		err := oe.orderUpdater.UpdateOrders(ctx, updatedOrders)
 		if err != nil {
-			logging.Logger.Error("error occured in order updater")
+			logging.Logger.Errorf("Order Enricher: error occured in order updater: %v", err)
 		}
 		wg.Done()
 	}()
 
 	wg.Wait()
+	logging.Logger.Infof("Order Enricher: end iteration")
 }
 
 func (oe *OrderEnricher) Run(ctx context.Context) error {
+	logging.Logger.Infof("Order Enricher: started")
 	ticker := time.NewTicker(oe.iterationPeriod)
 	defer ticker.Stop()
 

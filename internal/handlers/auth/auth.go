@@ -9,6 +9,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
 	"github.com/ry461ch/loyalty_system/internal/services"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type AuthHandlers struct {
@@ -42,6 +43,7 @@ func (ah *AuthHandlers) Register(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusConflict)
 			return
 		default:
+			logging.Logger.Errorf("Register: internal error: %v", err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -71,6 +73,7 @@ func (ah *AuthHandlers) Login(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		default:
+			logging.Logger.Errorf("Login: internal error: %v", err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}

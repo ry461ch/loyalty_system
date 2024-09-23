@@ -11,6 +11,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
 	"github.com/ry461ch/loyalty_system/internal/services"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type MoneyHandlers struct {
@@ -26,6 +27,7 @@ func NewMoneyHandlers(moneyService services.MoneyService) *MoneyHandlers {
 func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Request) {
 	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
+		logging.Logger.Errorf("Withdraw: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -67,6 +69,7 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		default:
+			logging.Logger.Errorf("Withdraw: internal error: %v", err)
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -77,12 +80,14 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Request) {
 	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
+		logging.Logger.Errorf("Get withdrawals: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	userWithdrawals, err := mh.moneyService.GetWithdrawals(req.Context(), userID)
 	if err != nil {
+		logging.Logger.Errorf("Get withdrawals: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -94,6 +99,7 @@ func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Reque
 
 	resp, err := json.Marshal(userWithdrawals)
 	if err != nil {
+		logging.Logger.Errorf("Get withdrawals: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -105,18 +111,21 @@ func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Reque
 func (mh *MoneyHandlers) GetBalance(res http.ResponseWriter, req *http.Request) {
 	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
+		logging.Logger.Errorf("Get balance: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	userBalance, err := mh.moneyService.GetBalance(req.Context(), userID)
 	if err != nil {
+		logging.Logger.Errorf("Get balance: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	resp, err := json.Marshal(userBalance)
 	if err != nil {
+		logging.Logger.Errorf("Get balance: internal error: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

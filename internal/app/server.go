@@ -53,9 +53,11 @@ func NewServer(cfg *config.Config) *Server {
 func (s *Server) Run() {
 	err := s.pgStorage.Init(context.Background())
 	if err != nil {
-		logging.Logger.Warnf("Db wasn't initialized: %s", err.Error())
+		logging.Logger.Errorf("Db wasn't initialized: %s", err.Error())
+		return
 	}
 	defer s.pgStorage.Close()
+	logging.Logger.Infof("Server: intiated db")
 
 	var wg sync.WaitGroup
 	wg.Add(3)
@@ -64,13 +66,16 @@ func (s *Server) Run() {
 	go func() {
 		logging.Logger.Info("Server is running: ", s.cfg.Addr.String())
 		s.server.ListenAndServe()
+		logging.Logger.Infof("Server: stopped")
 		wg.Done()
 	}()
 
 	// run crontasks
 	orderEnricherCtx, orderEnricherCtxCancel := context.WithCancel(context.Background())
 	go func() {
+		logging.Logger.Infof("Server: order enricher started")
 		s.orderEnricher.Run(orderEnricherCtx)
+		logging.Logger.Infof("Server: order enricher stopped")
 		wg.Done()
 	}()
 
@@ -79,10 +84,12 @@ func (s *Server) Run() {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt)
 		<-stop
+		logging.Logger.Infof("Server: got interrupt signal")
 		s.server.Shutdown(context.Background())
 		orderEnricherCtxCancel()
 		wg.Done()
 	}()
 
 	wg.Wait()
+	logging.Logger.Infof("Server: done")
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 func mockRouter(orderHandlers *OrderHandlers) chi.Router {
@@ -35,6 +36,7 @@ type outputOrder struct {
 }
 
 func TestGetOrders(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUserID := uuid.New()
 	existingOrder1ID := "1115"
 	existingOrder2ID := "1321"
@@ -93,6 +95,7 @@ func TestGetOrders(t *testing.T) {
 }
 
 func TestPostOrder(t *testing.T) {
+	logging.Initialize("INFO")
 	existingUserID := uuid.New()
 	existingOrderID := "1115"
 	invalidOrderID := "1111"
