@@ -84,7 +84,7 @@ func (bps *BalancePGStorage) ReduceBalance(ctx context.Context, userID uuid.UUID
 		UPDATE content.balances
 		SET
 			current = balances.current - $2,
-			withdrawn = balances.withdraw + $2,
+			withdrawn = balances.withdrawn + $2,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE user_id = $1;
 	`
