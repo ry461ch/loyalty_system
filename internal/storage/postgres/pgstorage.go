@@ -3,6 +3,7 @@ package pgstorage
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"github.com/ry461ch/loyalty_system/internal/storage/postgres/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/postgres/orders"
@@ -29,10 +30,26 @@ func NewPGStorage(DBDsn string) *PGStorage {
 	}
 }
 
+func getDDL() string {
+	return `
+		CREATE SCHEMA IF NOT EXISTS content;
+	`
+}
+
 func (ps *PGStorage) Init(ctx context.Context) error {
 	DB, err := sql.Open("pgx", ps.dsn)
 	if err != nil {
 		return err
+	}
+
+	requests := strings.Split(getDDL(), ";")
+	for _, request := range requests {
+		if request != "" {
+			_, err := DB.ExecContext(ctx, request)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	err = ps.BalanceStorage.Initialize(ctx, DB)

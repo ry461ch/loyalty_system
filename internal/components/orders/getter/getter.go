@@ -27,7 +27,7 @@ func NewOrderGetter(orderService services.OrderService, cfg *config.Config) *Ord
 func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDsChannel chan<- string, createdAt *time.Time) (*time.Time, error) {
 	waitingOrders, err := og.orderService.GetWaitingOrders(ctx, og.getOrdersLimit, createdAt)
 	if err != nil {
-		logging.Logger.Warnf("OrderUpdater: exceptions occured while getting waiting orders: %s", err.Error())
+		logging.Logger.Warnf("OrderGetter: exceptions occured while getting waiting orders: %s", err.Error())
 		return nil, err
 	}
 

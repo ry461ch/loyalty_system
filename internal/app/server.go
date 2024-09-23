@@ -53,7 +53,7 @@ func NewServer(cfg *config.Config) *Server {
 func (s *Server) Run() {
 	err := s.pgStorage.Init(context.Background())
 	if err != nil {
-		logging.Logger.Warnln("Db wasn't initialized")
+		logging.Logger.Warnf("Db wasn't initialized: %s", err.Error())
 	}
 	defer s.pgStorage.Close()
 

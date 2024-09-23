@@ -64,7 +64,7 @@ func (ups *UserPGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 
 func (ups *UserPGStorage) GetUser(ctx context.Context, login string) (*user.User, error) {
 	getUserFromDB := `
-		SELECT uid, login, password_hash FROM content.users WHERE login = $1;
+		SELECT id, login, password_hash FROM content.users WHERE login = $1;
 	`
 	row := ups.DB.QueryRowContext(ctx, getUserFromDB, login)
 
@@ -81,7 +81,7 @@ func (ups *UserPGStorage) GetUser(ctx context.Context, login string) (*user.User
 
 func (ups *UserPGStorage) InsertUser(ctx context.Context, newUser *user.User, tx *transaction.Trx) error {
 	insertUserQuery := `
-		INSERT INTO content.users (id, login, pass_hash) VALUES ($1, $2, $3);
+		INSERT INTO content.users (id, login, password_hash) VALUES ($1, $2, $3);
 	`
 
 	_, err := tx.ExecContext(ctx, insertUserQuery, newUser.ID, newUser.Login, newUser.PasswordHash)

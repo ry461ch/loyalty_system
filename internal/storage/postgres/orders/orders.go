@@ -123,8 +123,9 @@ func (ops *OrderPGStorage) GetWaitingOrders(ctx context.Context, limit int, inpu
 	getOrdersFromDB := `
 		SELECT id, status, accrual, created_at
 		FROM content.orders
-		WHERE status = 'NEW' OR status = 'PROCESSING' AND
-		($2 IS NULL OR created_at < $2)
+		WHERE 
+			(status = 'NEW' OR status = 'PROCESSING') AND
+			($2::TIMESTAMPTZ IS NULL OR created_at < $2::TIMESTAMPTZ)
 		ORDER BY created_at DESC
 		LIMIT $1;
 	`
