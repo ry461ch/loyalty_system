@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -28,5 +29,5 @@ type OrderService interface {
 	GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error)
 	InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error
 	UpdateOrder(ctx context.Context, inputOrder *order.Order) error
-	GetWaitingOrderIDs(ctx context.Context, limit, offset int) ([]string, error)
+	GetWaitingOrders(ctx context.Context, limit int, createdAt *time.Time) ([]order.Order, error)
 }

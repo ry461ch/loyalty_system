@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -118,38 +119,50 @@ func (ops *OrderPGStorage) UpdateOrder(ctx context.Context, order *order.Order, 
 	return &userID, nil
 }
 
-func (ops *OrderPGStorage) GetWaitingOrderIDs(ctx context.Context, limit int, offset int) ([]string, error) {
+func (ops *OrderPGStorage) GetWaitingOrders(ctx context.Context, limit int, inputCreatedAt *time.Time) ([]order.Order, error) {
 	getOrdersFromDB := `
-		SELECT id
+		SELECT id, status, accrual, created_at
 		FROM content.orders
-		WHERE status = 'NEW' OR status = 'PROCESSING'
-		ORDER BY created_at ASC
-		LIMIT $1 OFFSET $2;
+		WHERE status = 'NEW' OR status = 'PROCESSING' AND
+		($2 IS NULL OR created_at < $2)
+		ORDER BY created_at DESC
+		LIMIT $1;
 	`
 
-	rows, err := ops.DB.QueryContext(ctx, getOrdersFromDB, limit, offset)
+	var createdAt sql.NullTime
+	if inputCreatedAt != nil {
+		createdAt.Valid = true
+		createdAt.Time = *inputCreatedAt
+	}
+
+	rows, err := ops.DB.QueryContext(ctx, getOrdersFromDB, limit, createdAt)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	orderIDs := []string{}
+	waitingOrders := []order.Order{}
 	for rows.Next() {
-		var orderID string
+		var waitingOrder order.Order
+		var accrual sql.NullFloat64
 
-		err = rows.Scan(&orderID)
+		err = rows.Scan(&waitingOrder.ID, &waitingOrder.Status, &accrual, &waitingOrder.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
 
-		orderIDs = append(orderIDs, orderID)
+		if accrual.Valid {
+			waitingOrder.Accrual = &accrual.Float64
+		}
+
+		waitingOrders = append(waitingOrders, waitingOrder)
 	}
 
 	err = rows.Err()
 	if err != nil {
 		return nil, err
 	}
-	return orderIDs, nil
+	return waitingOrders, nil
 }
 
 func (ops *OrderPGStorage) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {

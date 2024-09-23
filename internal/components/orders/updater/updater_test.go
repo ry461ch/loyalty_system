@@ -22,16 +22,16 @@ func TestUpdater(t *testing.T) {
 	accrual := float64(200)
 	expectedOrders := []order.Order{
 		{
-			ID: "1115",
+			ID:     "1115",
 			Status: order.NEW,
 		},
 		{
-			ID: "1321",
+			ID:     "1321",
 			Status: order.INVALID,
 		},
 		{
-			ID: "1214",
-			Status: order.PROCESSED,
+			ID:      "1214",
+			Status:  order.PROCESSED,
 			Accrual: &accrual,
 		},
 	}
@@ -59,12 +59,12 @@ func TestUpdater(t *testing.T) {
 	orderService := orderservice.NewOrderService(orderStorage, moneyService)
 	updater := OrderUpdater{
 		orderService: orderService,
-		workersNum: 2,
+		workersNum:   2,
 	}
 
-	start := time.Now()
+	start := time.Now().UTC()
 	updater.UpdateOrders(context.TODO(), updatedOrdersChannel)
-	assert.GreaterOrEqual(t, time.Since(start), time.Second * 2, "workers worked less than 2 seconds")
+	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
 
 	updatedOrdersList, _ := orderStorage.GetUserOrders(context.TODO(), existingUserID)
 
@@ -83,7 +83,7 @@ func TestUpdater(t *testing.T) {
 	}
 
 	expectedBalance := balance.Balance{
-		Current: existingBalance.Current + accrual,
+		Current:   existingBalance.Current + accrual,
 		Withdrawn: existingBalance.Withdrawn,
 	}
 	userBalance, _ := balanceStorage.GetBalance(context.TODO(), existingUserID)

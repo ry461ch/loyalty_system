@@ -27,19 +27,19 @@ func TestJWTValidation(t *testing.T) {
 	}{
 		{
 			testName:    "valid token",
-			expiresAt:   time.Now().Add(time.Hour),
+			expiresAt:   time.Now().UTC().Add(time.Hour),
 			secretKey:   secretKey,
 			expectedErr: false,
 		},
 		{
 			testName:    "expired token",
-			expiresAt:   time.Now().Add(-time.Hour),
+			expiresAt:   time.Now().UTC().Add(-time.Hour),
 			secretKey:   secretKey,
 			expectedErr: true,
 		},
 		{
 			testName:    "invalid signature",
-			expiresAt:   time.Now().Add(time.Hour),
+			expiresAt:   time.Now().UTC().Add(time.Hour),
 			secretKey:   "invalid_secret_key",
 			expectedErr: true,
 		},

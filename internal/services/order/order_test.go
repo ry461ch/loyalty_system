@@ -83,7 +83,6 @@ func TestSaveOrder(t *testing.T) {
 	}
 }
 
-
 func TestGetUserOrders(t *testing.T) {
 	accrual := float64(500)
 	existingUserID := uuid.New()
@@ -92,12 +91,12 @@ func TestGetUserOrders(t *testing.T) {
 			Accrual:   &accrual,
 			Status:    order.PROCESSED,
 			ID:        "1115",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 		{
 			Status:    order.NEW,
 			ID:        "1321",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 	}
 
@@ -151,16 +150,20 @@ func TestGetUserOrders(t *testing.T) {
 func TestGetWaitingOrderIDs(t *testing.T) {
 	accrual := float64(500)
 	existingUser1ID := uuid.New()
+	createdAt1, _ := time.Parse(time.RFC3339, "2020-12-09T16:09:53Z")
+	createdAt2, _ := time.Parse(time.RFC3339, "2020-12-10T16:09:53Z")
+	createdAt3, _ := time.Parse(time.RFC3339, "2020-12-11T16:09:53Z")
+	createdAt4, _ := time.Parse(time.RFC3339, "2020-12-12T16:09:53Z")
 	existingOrdersUser1 := map[string]order.Order{
 		"1115": {
 			ID:        "1115",
 			Status:    order.PROCESSING,
-			CreatedAt: time.Now().UTC(),
+			CreatedAt: createdAt1,
 		},
 		"1321": {
 			ID:        "1321",
 			Status:    order.INVALID,
-			CreatedAt: time.Now().UTC(),
+			CreatedAt: createdAt2,
 		},
 	}
 	existingUser2ID := uuid.New()
@@ -168,16 +171,15 @@ func TestGetWaitingOrderIDs(t *testing.T) {
 		"1124": {
 			ID:        "1124",
 			Status:    order.PROCESSED,
-			CreatedAt: time.Now().UTC(),
+			CreatedAt: createdAt3,
 			Accrual:   &accrual,
 		},
 		"1131": {
 			ID:        "1131",
 			Status:    order.NEW,
-			CreatedAt: time.Now().UTC(),
+			CreatedAt: createdAt4,
 		},
 	}
-	expectedOrderIDs := []string{"1131", "1115"}
 
 	orderStorage := ordermemstorage.NewOrderMemStorage()
 	for _, existingOrder := range existingOrdersUser1 {
@@ -194,44 +196,54 @@ func TestGetWaitingOrderIDs(t *testing.T) {
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	orderService := NewOrderService(orderStorage, moneyService)
 
+	requestCreatedAt1, _ := time.Parse(time.RFC3339, "2020-12-09T16:00:00Z")
+	requestCreatedAt2, _ := time.Parse(time.RFC3339, "2020-12-10T16:00:00Z")
+	requestCreatedAt3, _ := time.Parse(time.RFC3339, "2020-12-13T16:00:00Z")
+
 	testCases := []struct {
-		testName          string
-		limit             int
-		offset 			  int
-		expectedOrdersNum int
+		testName         string
+		limit            int
+		createdAt        *time.Time
+		expectedOrderIDs []string
 	}{
 		{
-			testName:          "all waiting orders",
+			testName:         "all waiting orders",
 			limit:            3,
-			offset: 		  0,
-			expectedOrdersNum: 2,
+			createdAt:        &requestCreatedAt3,
+			expectedOrderIDs: []string{"1131", "1115"},
 		},
 		{
-			testName:          "last waiting order",
-			limit:            3,
-			offset: 		  1,
-			expectedOrdersNum: 1,
-		},
-		{
-			testName:          "first waiting order",
+			testName:         "only one latest order",
 			limit:            1,
-			offset: 		  0,
-			expectedOrdersNum: 1,
+			createdAt:        &requestCreatedAt3,
+			expectedOrderIDs: []string{"1131"},
 		},
 		{
-			testName:          "first waiting order",
+			testName:         "only one earliset order",
 			limit:            2,
-			offset: 		  2,
-			expectedOrdersNum: 0,
+			createdAt:        &requestCreatedAt2,
+			expectedOrderIDs: []string{"1115"},
+		},
+		{
+			testName:         "too early createdAt",
+			limit:            2,
+			createdAt:        &requestCreatedAt1,
+			expectedOrderIDs: []string{},
+		},
+		{
+			testName:         "nil createdAt",
+			limit:            1,
+			createdAt:        nil,
+			expectedOrderIDs: []string{"1131"},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			waitingOrderIDs, _ := orderService.GetWaitingOrderIDs(context.TODO(), tc.limit, tc.offset)
-			assert.Equal(t, tc.expectedOrdersNum, len(waitingOrderIDs), "num of orders don't match")
-			for _, userOrderID := range waitingOrderIDs {
-				assert.Contains(t, expectedOrderIDs, userOrderID, "user orders contains not waiting order id")
+			waitingOrders, _ := orderService.GetWaitingOrders(context.TODO(), tc.limit, tc.createdAt)
+			assert.Equal(t, len(tc.expectedOrderIDs), len(waitingOrders), "num of orders don't match")
+			for _, userOrder := range waitingOrders {
+				assert.Contains(t, tc.expectedOrderIDs, userOrder.ID, "user orders doesn't contain expected order id")
 			}
 		})
 	}

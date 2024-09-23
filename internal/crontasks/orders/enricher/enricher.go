@@ -2,23 +2,23 @@ package orderenricher
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
-	"errors"
 
 	"github.com/ry461ch/loyalty_system/internal/components/orders"
+	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
-	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type OrderEnricher struct {
-	orderSender ordercomponents.OrderSender
-	orderUpdater ordercomponents.OrderUpdater
-	orderGetter ordercomponents.OrderGetter
+	orderSender          ordercomponents.OrderSender
+	orderUpdater         ordercomponents.OrderUpdater
+	orderGetter          ordercomponents.OrderGetter
 	iterationChannelSize int
-	iterationTimeout time.Duration
-	iterationPeriod  time.Duration
+	iterationTimeout     time.Duration
+	iterationPeriod      time.Duration
 }
 
 func NewOrderEnricher(
@@ -28,12 +28,12 @@ func NewOrderEnricher(
 	cfg *config.Config,
 ) *OrderEnricher {
 	return &OrderEnricher{
-		orderGetter: orderGetter,
-		orderSender: orderSender,
-		orderUpdater: orderUpdater,
+		orderGetter:          orderGetter,
+		orderSender:          orderSender,
+		orderUpdater:         orderUpdater,
 		iterationChannelSize: cfg.OrderEnricherChannelSize,
-		iterationTimeout: cfg.OrderEnricherTimeout,
-		iterationPeriod: cfg.OrderEnricherPeriod,
+		iterationTimeout:     cfg.OrderEnricherTimeout,
+		iterationPeriod:      cfg.OrderEnricherPeriod,
 	}
 }
 

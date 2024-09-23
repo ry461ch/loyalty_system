@@ -29,7 +29,7 @@ func (wms *WithdrawalMemStorage) InsertWithdrawal(ctx context.Context, inputWith
 	}
 	userWithdrawals := val.(map[uuid.UUID]withdrawal.Withdrawal)
 
-	createdAt := time.Now()
+	createdAt := time.Now().UTC()
 	userWithdrawals[*inputWithdrawal.ID] = withdrawal.Withdrawal{
 		CreatedAt: &createdAt,
 		ID:        inputWithdrawal.ID,

@@ -35,7 +35,7 @@ func TestGetBalance(t *testing.T) {
 		Withdrawn: 300,
 	}
 	existingWithdrawalID := uuid.New()
-	createdAt := time.Now()
+	createdAt := time.Now().UTC()
 	existingWithdrawal := withdrawal.Withdrawal{
 		ID:        &existingWithdrawalID,
 		OrderID:   "1115",

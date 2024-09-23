@@ -3,6 +3,7 @@ package orderservice
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -29,8 +30,8 @@ func (os *OrderService) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]
 	return os.orderStorage.GetUserOrders(ctx, userID)
 }
 
-func (os *OrderService) GetWaitingOrderIDs(ctx context.Context, limit, offset int) ([]string, error) {
-	return os.orderStorage.GetWaitingOrderIDs(ctx, limit, offset)
+func (os *OrderService) GetWaitingOrders(ctx context.Context, limit int, createdAt *time.Time) ([]order.Order, error) {
+	return os.orderStorage.GetWaitingOrders(ctx, limit, createdAt)
 }
 
 func (os *OrderService) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error {
@@ -92,7 +93,7 @@ func (os *OrderService) UpdateOrder(ctx context.Context, inputOrder *order.Order
 		tx.Rollback()
 		return err
 	}
-	
+
 	tx.Commit()
 	return nil
 }

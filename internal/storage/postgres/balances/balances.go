@@ -103,7 +103,7 @@ func (bps *BalancePGStorage) AddBalance(ctx context.Context, userID uuid.UUID, a
 			updated_at = CURRENT_TIMESTAMP
 		;
 	`
-	
+
 	_, err := tx.ExecContext(ctx, insertBalanceQuery, userID, amount)
 	return err
 }

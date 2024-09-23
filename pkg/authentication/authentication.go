@@ -29,7 +29,7 @@ func NewAuthenticator(secretKey string, tokenExp time.Duration) *Authenticator {
 func (a *Authenticator) MakeJWT(ID uuid.UUID, login string) (*string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(a.tokenExp)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(a.tokenExp)),
 		},
 		UserID: ID,
 		Login:  login,

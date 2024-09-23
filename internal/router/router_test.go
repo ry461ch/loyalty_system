@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/go-resty/resty/v2"
 
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
 	"github.com/ry461ch/loyalty_system/pkg/logging"

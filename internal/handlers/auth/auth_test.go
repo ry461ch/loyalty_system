@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
 	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ry461ch/loyalty_system/internal/models/user"
 	"github.com/ry461ch/loyalty_system/internal/services/user"

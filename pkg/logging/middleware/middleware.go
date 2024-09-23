@@ -33,7 +33,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 
 func WithLogging(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+		start := time.Now().UTC()
 
 		responseData := &responseData{
 			status: 0,

@@ -2,9 +2,9 @@ package ordermemstorage
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
-	"slices"
 
 	"github.com/google/uuid"
 
@@ -36,7 +36,7 @@ func (oms *OrderMemStorage) InsertOrder(ctx context.Context, userID uuid.UUID, o
 	newOrder := order.Order{
 		ID:        orderID,
 		Status:    order.NEW,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	val, ok := oms.usersToOrdersMap.Load(userID)
@@ -66,12 +66,13 @@ func (oms *OrderMemStorage) UpdateOrder(ctx context.Context, newOrder *order.Ord
 	return &userID, nil
 }
 
-func (oms *OrderMemStorage) GetWaitingOrderIDs(ctx context.Context, limit int, offset int) ([]string, error) {
+func (oms *OrderMemStorage) GetWaitingOrders(ctx context.Context, limit int, inputCreatedAt *time.Time) ([]order.Order, error) {
 	var waitingOrders []order.Order
 	oms.usersToOrdersMap.Range(func(key any, val any) bool {
 		userOrders := val.(map[string]order.Order)
 		for _, userOrder := range userOrders {
-			if userOrder.Status == order.NEW || userOrder.Status == order.PROCESSING {
+			if (userOrder.Status == order.NEW || userOrder.Status == order.PROCESSING) &&
+				(inputCreatedAt == nil || inputCreatedAt.Compare(userOrder.CreatedAt) > 0) {
 				waitingOrders = append(waitingOrders, userOrder)
 			}
 		}
@@ -83,12 +84,8 @@ func (oms *OrderMemStorage) GetWaitingOrderIDs(ctx context.Context, limit int, o
 		return right.CreatedAt.Compare(left.CreatedAt)
 	})
 
-	resultOrders := waitingOrders[min(offset, len(waitingOrders)):min(offset + limit, len(waitingOrders))]
-	var resultOrderIDs []string
-	for _, resultOrder := range resultOrders {
-		resultOrderIDs = append(resultOrderIDs, resultOrder.ID)
-	}
-	return resultOrderIDs, nil
+	resultOrders := waitingOrders[:min(limit, len(waitingOrders))]
+	return resultOrders, nil
 }
 
 func (oms *OrderMemStorage) GetUserOrders(ctx context.Context, userID uuid.UUID) ([]order.Order, error) {

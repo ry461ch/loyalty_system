@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/go-resty/resty/v2"
 
-	"github.com/ry461ch/loyalty_system/internal/services/order"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
+	"github.com/ry461ch/loyalty_system/internal/services/order"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"

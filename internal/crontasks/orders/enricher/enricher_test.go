@@ -11,30 +11,30 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
+	"github.com/ry461ch/loyalty_system/internal/components/orders/getter"
+	"github.com/ry461ch/loyalty_system/internal/components/orders/sender"
+	"github.com/ry461ch/loyalty_system/internal/components/orders/updater"
+	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
 	"github.com/ry461ch/loyalty_system/internal/models/netaddr"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
-	"github.com/ry461ch/loyalty_system/internal/components/orders/sender"
-	"github.com/ry461ch/loyalty_system/internal/components/orders/updater"
-	"github.com/ry461ch/loyalty_system/internal/components/orders/getter"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/services/order"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/orders"
 	"github.com/ry461ch/loyalty_system/internal/storage/memory/withdrawals"
-	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type MockServerStorage struct {
-	timesCalled    int
+	timesCalled int
 }
 
 type outputOrder struct {
-	ID string  `json:"order"`
-	Status string `json:"status"`
+	ID      string  `json:"order"`
+	Status  string  `json:"status"`
 	Accrual float64 `json:"accrual,omitempty"`
 }
 
@@ -42,18 +42,18 @@ func (m *MockServerStorage) handler(res http.ResponseWriter, req *http.Request) 
 	m.timesCalled += 1
 
 	orderID := chi.URLParam(req, "order_id")
-	
+
 	var resultOrder *outputOrder
 	switch orderID {
 	case "1115":
 		resultOrder = &outputOrder{
-			ID: orderID,
-			Status: "PROCESSED",
+			ID:      orderID,
+			Status:  "PROCESSED",
 			Accrual: 100,
 		}
 	case "1214":
 		resultOrder = &outputOrder{
-			ID: orderID,
+			ID:     orderID,
 			Status: "INVALID",
 		}
 	}
@@ -89,38 +89,38 @@ func TestEnricher(t *testing.T) {
 	existingUserID := uuid.New()
 	existingOrders := []order.Order{
 		{
-			ID: "1115",
+			ID:     "1115",
 			Status: order.NEW,
 		},
 		{
-			ID: "1321",
+			ID:     "1321",
 			Status: order.INVALID,
 		},
 		{
-			ID: "1214",
+			ID:     "1214",
 			Status: order.PROCESSING,
 		},
 		{
-			ID: "1313",
+			ID:     "1313",
 			Status: order.NEW,
 		},
 	}
 	expectedOrders := []order.Order{
 		{
-			ID: "1313",
+			ID:     "1313",
 			Status: order.NEW,
 		},
 		{
-			ID: "1321",
+			ID:     "1321",
 			Status: order.INVALID,
 		},
 		{
-			ID: "1115",
-			Status: order.PROCESSED,
+			ID:      "1115",
+			Status:  order.PROCESSED,
 			Accrual: &accrual,
 		},
 		{
-			ID: "1214",
+			ID:     "1214",
 			Status: order.INVALID,
 		},
 	}
@@ -138,13 +138,14 @@ func TestEnricher(t *testing.T) {
 	orderService := orderservice.NewOrderService(orderStorage, moneyService)
 
 	cfg := config.Config{
-		OrderUpdaterRateLimit: 10,
-		OrderGetterOrdersLimit: 2,
-		OrderGetterRateLimit: 1,
-		OrderSenderRateLimit: 2,
+		AccuralSystemAddr:         *splitURL(srv.URL),
+		OrderUpdaterRateLimit:     10,
+		OrderGetterOrdersLimit:    2,
+		OrderGetterRateLimit:      1,
+		OrderSenderRateLimit:      2,
 		OrderSenderAccrualTimeout: time.Millisecond * 500,
 		OrderSenderAccrualRetries: 3,
-		OrderEnricherChannelSize: 10,
+		OrderEnricherChannelSize:  10,
 	}
 
 	sender := ordersender.NewOrderSender(&cfg)
@@ -153,9 +154,9 @@ func TestEnricher(t *testing.T) {
 
 	enricher := NewOrderEnricher(getter, sender, updater, &cfg)
 
-	start := time.Now()
+	start := time.Now().UTC()
 	enricher.runIteration(context.TODO())
-	assert.GreaterOrEqual(t, time.Since(start), time.Second * 2, "workers worked less than 2 seconds")
+	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
 
 	updatedOrdersList, _ := orderStorage.GetUserOrders(context.TODO(), existingUserID)
 
@@ -174,7 +175,7 @@ func TestEnricher(t *testing.T) {
 	}
 
 	expectedBalance := balance.Balance{
-		Current: accrual,
+		Current:   accrual,
 		Withdrawn: 0,
 	}
 	userBalance, _ := balanceStorage.GetBalance(context.TODO(), existingUserID)

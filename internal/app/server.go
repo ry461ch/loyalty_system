@@ -10,22 +10,22 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	"github.com/ry461ch/loyalty_system/internal/crontasks/orders/enricher"
 	"github.com/ry461ch/loyalty_system/internal/components/orders/initial"
 	"github.com/ry461ch/loyalty_system/internal/config"
+	"github.com/ry461ch/loyalty_system/internal/crontasks/orders/enricher"
 	"github.com/ry461ch/loyalty_system/internal/handlers/initial"
 	"github.com/ry461ch/loyalty_system/internal/router"
 	"github.com/ry461ch/loyalty_system/internal/services/initial"
 	"github.com/ry461ch/loyalty_system/internal/storage/postgres"
-	"github.com/ry461ch/loyalty_system/pkg/logging"
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
+	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type Server struct {
-	cfg               *config.Config
-	pgStorage    	  *pgstorage.PGStorage
-	orderEnricher     *orderenricher.OrderEnricher
-	server            *http.Server
+	cfg           *config.Config
+	pgStorage     *pgstorage.PGStorage
+	orderEnricher *orderenricher.OrderEnricher
+	server        *http.Server
 }
 
 func NewServer(cfg *config.Config) *Server {
@@ -44,7 +44,7 @@ func NewServer(cfg *config.Config) *Server {
 
 	return &Server{
 		cfg:           cfg,
-		pgStorage: pgStorage,
+		pgStorage:     pgStorage,
 		orderEnricher: orderEnricher,
 		server:        server,
 	}

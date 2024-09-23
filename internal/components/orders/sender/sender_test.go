@@ -18,12 +18,12 @@ import (
 )
 
 type MockServerStorage struct {
-	timesCalled    int
+	timesCalled int
 }
 
 type outputOrder struct {
-	ID string  `json:"order"`
-	Status string `json:"status"`
+	ID      string  `json:"order"`
+	Status  string  `json:"status"`
 	Accrual float64 `json:"accrual,omitempty"`
 }
 
@@ -31,18 +31,18 @@ func (m *MockServerStorage) handler(res http.ResponseWriter, req *http.Request) 
 	m.timesCalled += 1
 
 	orderID := chi.URLParam(req, "order_id")
-	
+
 	var resultOrder *outputOrder
 	switch orderID {
 	case "1115":
 		resultOrder = &outputOrder{
-			ID: orderID,
-			Status: "PROCESSED",
+			ID:      orderID,
+			Status:  "PROCESSED",
 			Accrual: 100,
 		}
 	case "1214":
 		resultOrder = &outputOrder{
-			ID: orderID,
+			ID:     orderID,
 			Status: "INVALID",
 		}
 	}
@@ -84,14 +84,14 @@ func TestSender(t *testing.T) {
 	defer close(updatedOrdersChannel)
 
 	sender := OrderSender{
-		accrualAddr: splitURL(srv.URL), 
-		workersNum: 2,
-		client: getClient(time.Millisecond * 500, 3),
+		accrualAddr: splitURL(srv.URL),
+		workersNum:  2,
+		client:      getClient(time.Millisecond*500, 3),
 	}
 
-	start := time.Now()
+	start := time.Now().UTC()
 	sender.GetUpdatedOrders(context.TODO(), orderIDsChannel, updatedOrdersChannel)
-	assert.GreaterOrEqual(t, time.Since(start), time.Second * 2, "workers worked less than 2 seconds")
+	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
 
 	assert.Equal(t, 3, serverStorage.timesCalled, "Не прошел запрос на сервер")
 
@@ -105,16 +105,16 @@ func TestSender(t *testing.T) {
 	accrual := float64(100)
 	expectedOrders := []order.Order{
 		{
-			ID: "1115",
-			Status: order.PROCESSED,
+			ID:      "1115",
+			Status:  order.PROCESSED,
 			Accrual: &accrual,
 		},
 		{
-			ID: "1214",
+			ID:     "1214",
 			Status: order.INVALID,
 		},
 	}
-	
+
 	for _, expectedOrder := range expectedOrders {
 		updatedOrder, ok := updatedOrders[expectedOrder.ID]
 		assert.True(t, ok, "orser was not in updated list")

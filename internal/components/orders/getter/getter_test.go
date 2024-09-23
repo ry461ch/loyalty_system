@@ -19,19 +19,19 @@ import (
 func TestGetter(t *testing.T) {
 	expectedOrders := []order.Order{
 		{
-			ID: "1115",
+			ID:     "1115",
 			Status: order.NEW,
 		},
 		{
-			ID: "1321",
+			ID:     "1321",
 			Status: order.INVALID,
 		},
 		{
-			ID: "1214",
+			ID:     "1214",
 			Status: order.PROCESSING,
 		},
 		{
-			ID: "1313",
+			ID:     "1313",
 			Status: order.NEW,
 		},
 	}
@@ -52,18 +52,18 @@ func TestGetter(t *testing.T) {
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	orderService := orderservice.NewOrderService(orderStorage, moneyService)
 	getter := OrderGetter{
-		orderService: orderService,
+		orderService:   orderService,
 		getOrdersLimit: 2,
-		rateLimit: 1,
+		rateLimit:      1,
 	}
 
-	start := time.Now()
+	start := time.Now().UTC()
 	getter.GetWaitingOrderIDs(context.TODO(), orderIDsChannel)
-	assert.GreaterOrEqual(t, time.Since(start), time.Second * 2, "workers worked less than 2 seconds")
+	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
 
 	updatedOrders := map[string]bool{}
 	for range 3 {
-		updatedOrderID := <- orderIDsChannel
+		updatedOrderID := <-orderIDsChannel
 		updatedOrders[updatedOrderID] = true
 	}
 

@@ -13,21 +13,21 @@ import (
 )
 
 type Config struct {
-	DBDsn             string             `env:"DATABASE_URI"`
-	Addr              netaddr.NetAddress `env:"RUN_ADDRESS"`
-	AccuralSystemAddr netaddr.NetAddress `env:"ACCRUAL_SYSTEM_ADDRESS"`
-	LogLevel          string             `env:"LOG_LEVEL"`
-	JWTSecretKey      string             `env:"SECRET_KEY"`
-	TokenExp          time.Duration      `env:"TOKEN_EXP"`
-	OrderUpdaterRateLimit int            `env:"ORDER_UPDATER_RATE_LIMIT"`
-	OrderGetterOrdersLimit int		     `env:"ORDER_GETTER_ORDERS_LIMIT"`
-	OrderGetterRateLimit int		     `env:"ORDER_GETTER_RATE_LIMIT"`
-	OrderSenderRateLimit int			 `env:"ORDER_SENDER_RATE_LIMIT"`
-	OrderSenderAccrualTimeout time.Duration `env:"ORDER_SENDER_ACCRUAL_TIMEOUT"`
-	OrderSenderAccrualRetries int			`env:"ORDER_SENDER_ACCRUAL_RETRIES"`
-	OrderEnricherTimeout	time.Duration	`env:"ORDER_ENRICHER_TIMEOUT"`
-	OrderEnricherPeriod	time.Duration	`env:"ORDER_ENRICHER_PERIOD"`
-	OrderEnricherChannelSize	int	`env:"ORDER_ENRICHER_CHANNEL_SIZE"`
+	DBDsn                     string             `env:"DATABASE_URI"`
+	Addr                      netaddr.NetAddress `env:"RUN_ADDRESS"`
+	AccuralSystemAddr         netaddr.NetAddress `env:"ACCRUAL_SYSTEM_ADDRESS"`
+	LogLevel                  string             `env:"LOG_LEVEL"`
+	JWTSecretKey              string             `env:"SECRET_KEY"`
+	TokenExp                  time.Duration      `env:"TOKEN_EXP"`
+	OrderUpdaterRateLimit     int                `env:"ORDER_UPDATER_RATE_LIMIT"`
+	OrderGetterOrdersLimit    int                `env:"ORDER_GETTER_ORDERS_LIMIT"`
+	OrderGetterRateLimit      int                `env:"ORDER_GETTER_RATE_LIMIT"`
+	OrderSenderRateLimit      int                `env:"ORDER_SENDER_RATE_LIMIT"`
+	OrderSenderAccrualTimeout time.Duration      `env:"ORDER_SENDER_ACCRUAL_TIMEOUT"`
+	OrderSenderAccrualRetries int                `env:"ORDER_SENDER_ACCRUAL_RETRIES"`
+	OrderEnricherTimeout      time.Duration      `env:"ORDER_ENRICHER_TIMEOUT"`
+	OrderEnricherPeriod       time.Duration      `env:"ORDER_ENRICHER_PERIOD"`
+	OrderEnricherChannelSize  int                `env:"ORDER_ENRICHER_CHANNEL_SIZE"`
 }
 
 func generateJWTKey() string {
@@ -63,7 +63,7 @@ func parseArgs(cfg *Config) {
 	flag.IntVar(&cfg.OrderEnricherChannelSize, "order-enricher-channel-size", 1000, "size of channel with orders in order enricher")
 	flag.IntVar(&cfg.OrderSenderAccrualRetries, "order-sender-accrual-retries", 3, "retries num for send orders to accrual service in order sender")
 	flag.IntVar(&cfg.OrderSenderRateLimit, "order-sender-rate-limit", 10, "rate limit for send orders to accrual service in order sender")
-	flag.DurationVar(&cfg.OrderSenderAccrualTimeout, "order-sender-accrual-timeout", time.Millisecond * 500, "timeout for single request in order sender")
+	flag.DurationVar(&cfg.OrderSenderAccrualTimeout, "order-sender-accrual-timeout", time.Millisecond*500, "timeout for single request in order sender")
 	flag.IntVar(&cfg.OrderUpdaterRateLimit, "order-updater-rate-limit", 10, "rate limit for updating db in order updater")
 	flag.IntVar(&cfg.OrderGetterOrdersLimit, "order-getter-orders-limit", 1000, "num of orders in one iteration in order getter")
 	flag.IntVar(&cfg.OrderGetterRateLimit, "order-getter-rate-limit", 10, "rate limit for getting orders in order getter")

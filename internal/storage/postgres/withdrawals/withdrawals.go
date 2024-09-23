@@ -70,7 +70,7 @@ func (wps *WithdrawalPGStorage) InsertWithdrawal(ctx context.Context, inputWithd
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO NOTHING;
 	`
-	
+
 	_, err := tx.ExecContext(ctx, insertWithdrawalQuery, *inputWithdrawal.ID, inputWithdrawal.OrderID, *inputWithdrawal.UserID, inputWithdrawal.Sum)
 	return err
 }

@@ -6,25 +6,25 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/storage/postgres/balances"
 	"github.com/ry461ch/loyalty_system/internal/storage/postgres/orders"
-	"github.com/ry461ch/loyalty_system/internal/storage/postgres/withdrawals"
 	"github.com/ry461ch/loyalty_system/internal/storage/postgres/users"
+	"github.com/ry461ch/loyalty_system/internal/storage/postgres/withdrawals"
 )
 
 type PGStorage struct {
-	dsn string
-	DB *sql.DB
-	OrderStorage *orderpgstorage.OrderPGStorage
+	dsn               string
+	DB                *sql.DB
+	OrderStorage      *orderpgstorage.OrderPGStorage
 	WithdrawalStorage *withdrawalpgstorage.WithdrawalPGStorage
-	BalanceStorage *balancepgstorage.BalancePGStorage
-	UserStorage *userpgstorage.UserPGStorage
+	BalanceStorage    *balancepgstorage.BalancePGStorage
+	UserStorage       *userpgstorage.UserPGStorage
 }
 
 func NewPGStorage(DBDsn string) *PGStorage {
 	return &PGStorage{
-		dsn: DBDsn,
-		OrderStorage: orderpgstorage.NewOrderPGStorage(DBDsn),
-		UserStorage: userpgstorage.NewUserPGStorage(DBDsn),
-		BalanceStorage: balancepgstorage.NewBalancePGStorage(DBDsn),
+		dsn:               DBDsn,
+		OrderStorage:      orderpgstorage.NewOrderPGStorage(DBDsn),
+		UserStorage:       userpgstorage.NewUserPGStorage(DBDsn),
+		BalanceStorage:    balancepgstorage.NewBalancePGStorage(DBDsn),
 		WithdrawalStorage: withdrawalpgstorage.NewWithdrawalPGStorage(DBDsn),
 	}
 }

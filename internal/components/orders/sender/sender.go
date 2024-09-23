@@ -8,55 +8,55 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/sync/errgroup"
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/netaddr"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
-	"github.com/ry461ch/loyalty_system/internal/config"
 )
 
 type OrderSender struct {
 	accrualAddr *netaddr.NetAddress
-	workersNum  int  // RateLimit
-	client *resty.Client
+	workersNum  int // RateLimit
+	client      *resty.Client
 }
 
 func getClient(timeout time.Duration, retries int) *resty.Client {
 	return resty.New().
-	SetContentLength(true).
-	SetRetryCount(retries).
-	SetTimeout(timeout).
-	SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
-		// 429
-		if resp.StatusCode() == http.StatusTooManyRequests {
-			retryAfterStr := resp.Header().Get("Retry-After")
-			if retryAfterStr == "" {
-				return 0, fmt.Errorf("no Retry-After header came from accrual service")
+		SetContentLength(true).
+		SetRetryCount(retries).
+		SetTimeout(timeout).
+		SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
+			// 429
+			if resp.StatusCode() == http.StatusTooManyRequests {
+				retryAfterStr := resp.Header().Get("Retry-After")
+				if retryAfterStr == "" {
+					return 0, fmt.Errorf("no Retry-After header came from accrual service")
+				}
+				retryAfter, err := strconv.Atoi(retryAfterStr)
+				if err != nil {
+					return 0, fmt.Errorf("bad Retry-After header came from accrual service")
+				}
+				return time.Duration(retryAfter) * time.Second, nil
 			}
-			retryAfter, err := strconv.Atoi(retryAfterStr)
-			if err != nil {
-				return 0, fmt.Errorf("bad Retry-After header came from accrual service")
+
+			// timeout or 5**
+			if resp.IsError() || resp.StatusCode() >= 500 {
+				return 0, nil
 			}
-			return time.Duration(retryAfter) * time.Second, nil
-		}
 
-		// timeout or 5**
-		if resp.IsError() || resp.StatusCode() >= 500 {
-			return 0, nil
-		}
-
-		// 4**
-		return 0, fmt.Errorf("bad Request")
-	})
+			// 4**
+			return 0, fmt.Errorf("bad Request")
+		})
 }
 
 func NewOrderSender(cfg *config.Config) *OrderSender {
 	return &OrderSender{
 		accrualAddr: &cfg.AccuralSystemAddr,
-		workersNum: cfg.OrderSenderRateLimit,
-		client: getClient(cfg.OrderSenderAccrualTimeout, cfg.OrderSenderAccrualRetries),
+		workersNum:  cfg.OrderSenderRateLimit,
+		client:      getClient(cfg.OrderSenderAccrualTimeout, cfg.OrderSenderAccrualRetries),
 	}
 }
 
@@ -103,10 +103,10 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 			}
 
 			select {
-				case <-ctx.Done():
-					return fmt.Errorf("order sender: graceful shutdown worker %d", workerID)
-				case updatedOrders <- *updatedOrder:
-					break
+			case <-ctx.Done():
+				return fmt.Errorf("order sender: graceful shutdown worker %d", workerID)
+			case updatedOrders <- *updatedOrder:
+				break
 			}
 		}
 

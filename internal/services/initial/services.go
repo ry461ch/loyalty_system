@@ -23,7 +23,7 @@ func NewServices(
 ) *Services {
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	return &Services{
-		UserService: userservice.NewUserService(userStorage, authenticator),
+		UserService:  userservice.NewUserService(userStorage, authenticator),
 		MoneyService: moneyService,
 		OrderService: orderservice.NewOrderService(orderStorage, moneyService),
 	}
