@@ -174,7 +174,7 @@ func TestWithdraw(t *testing.T) {
 				UserID:  &existingUserID,
 				Sum:     existingBalance.Current + 100,
 			},
-			expectedError:   exceptions.NewBalanceNotEnoughBalanceError(),
+			expectedError:   exceptions.ErrNotEnoughBalance,
 			expectedBalance: existingBalance,
 		},
 		{
@@ -185,7 +185,7 @@ func TestWithdraw(t *testing.T) {
 				UserID:  &existingUserID,
 				Sum:     0,
 			},
-			expectedError:   exceptions.NewBalanceBadAmountFormatError(),
+			expectedError:   exceptions.ErrBalanceBadAmountFormat,
 			expectedBalance: existingBalance,
 		},
 		{
@@ -196,7 +196,7 @@ func TestWithdraw(t *testing.T) {
 				UserID:  &existingUserID,
 				Sum:     100,
 			},
-			expectedError:   exceptions.NewOrderBadIDFormatError(),
+			expectedError:   exceptions.ErrOrderBadIDFormat,
 			expectedBalance: existingBalance,
 		},
 	}
@@ -274,7 +274,7 @@ func TestAddAccrual(t *testing.T) {
 				balanceInDB, _ := balanceStorage.GetBalance(context.TODO(), tc.userID)
 				assert.Equal(t, *tc.expectedBalance, *balanceInDB, "balances don't match")
 			} else {
-				assert.ErrorIs(t, err, exceptions.NewBalanceBadAmountFormatError(), "exceptions don't match")
+				assert.ErrorIs(t, err, exceptions.ErrBalanceBadAmountFormat, "exceptions don't match")
 			}
 		})
 	}

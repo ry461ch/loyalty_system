@@ -27,9 +27,9 @@ func NewUserService(userStorage storage.UserStorage, authenticator *authenticati
 func (us *UserService) Register(ctx context.Context, inputUser *user.InputUser) (*string, error) {
 	registeredUser, err := us.userStorage.GetUser(ctx, inputUser.Login)
 	if registeredUser != nil {
-		return nil, exceptions.NewUserConflictError()
+		return nil, exceptions.ErrUserConflict
 	}
-	if !errors.Is(err, exceptions.NewUserNotFoundError()) {
+	if !errors.Is(err, exceptions.ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -56,14 +56,14 @@ func (us *UserService) Register(ctx context.Context, inputUser *user.InputUser) 
 func (us *UserService) Login(ctx context.Context, inputUser *user.InputUser) (*string, error) {
 	userInDB, err := us.userStorage.GetUser(ctx, inputUser.Login)
 	if err != nil {
-		if errors.Is(err, exceptions.NewUserNotFoundError()) {
-			return nil, exceptions.NewUserAuthenticationError()
+		if errors.Is(err, exceptions.ErrUserNotFound) {
+			return nil, exceptions.ErrUserAuthentication
 		}
 		return nil, err
 	}
 
 	if !user.CheckPassword(userInDB.PasswordHash, inputUser.Password) {
-		return nil, exceptions.NewUserAuthenticationError()
+		return nil, exceptions.ErrUserAuthentication
 	}
 
 	return us.authenticator.MakeJWT(userInDB.ID, userInDB.Login)

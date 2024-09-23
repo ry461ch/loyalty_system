@@ -88,7 +88,7 @@ func TestGetUser(t *testing.T) {
 			if tc.expectedUser != nil {
 				assert.Equal(t, *tc.expectedUser, *userInDB, "users not equal")
 			} else {
-				assert.ErrorIs(t, err, exceptions.NewUserNotFoundError(), "exceptions don't match")
+				assert.ErrorIs(t, err, exceptions.ErrUserNotFound, "exceptions don't match")
 			}
 		})
 	}

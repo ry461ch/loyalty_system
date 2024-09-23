@@ -15,7 +15,7 @@ func TestJWTValidation(t *testing.T) {
 	secretKey := "test"
 	authenticator := Authenticator{
 		secretKey: secretKey,
-		tokenExp: time.Hour,
+		tokenExp:  time.Hour,
 	}
 	tokenUserID := uuid.New()
 
@@ -70,8 +70,8 @@ func TestJWTValidation(t *testing.T) {
 func TestJWTGeneration(t *testing.T) {
 	secretKey := "test"
 	authenticator := Authenticator{
-		secretKey: 	  secretKey,
-		tokenExp:     time.Hour,
+		secretKey: secretKey,
+		tokenExp:  time.Hour,
 	}
 	inputID := uuid.New()
 	login := "login"

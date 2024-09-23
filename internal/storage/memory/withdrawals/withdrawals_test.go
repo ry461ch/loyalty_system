@@ -155,7 +155,7 @@ func TestGetWithdrawal(t *testing.T) {
 		{
 			testName:     "new withdrawalId",
 			withdrawalID: uuid.New(),
-			expectedErr:  exceptions.NewWithdrawalNotFoundError(),
+			expectedErr:  exceptions.ErrWithdrawalNotFound,
 		},
 	}
 
@@ -167,7 +167,7 @@ func TestGetWithdrawal(t *testing.T) {
 
 			userWithdrawal, err := storage.GetWithdrawal(context.TODO(), tc.withdrawalID)
 			if tc.expectedErr != nil {
-				assert.ErrorIs(t, err, exceptions.NewWithdrawalNotFoundError(), "errors don't match")
+				assert.ErrorIs(t, err, exceptions.ErrWithdrawalNotFound, "errors don't match")
 			} else {
 				assert.Equal(t, existingWithdrawal, *userWithdrawal, "withdrawals don't match")
 			}

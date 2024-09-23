@@ -103,7 +103,7 @@ func TestGetUserID(t *testing.T) {
 			if tc.expectedUserID != nil {
 				assert.Equal(t, *tc.expectedUserID, *userID, "users don't match")
 			} else {
-				assert.ErrorIs(t, err, exceptions.NewOrderNotFoundError(), "order found but shoildn't")
+				assert.ErrorIs(t, err, exceptions.ErrOrderNotFound, "order found but shoildn't")
 			}
 		})
 	}
@@ -290,7 +290,7 @@ func TestUpdateOrder(t *testing.T) {
 				Accrual:   &accrual,
 				CreatedAt: createdAt,
 			},
-			expectedErr: exceptions.NewOrderNotFoundError(),
+			expectedErr: exceptions.ErrOrderNotFound,
 		},
 	}
 

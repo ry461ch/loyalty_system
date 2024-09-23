@@ -62,10 +62,10 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 	err = mh.moneyService.Withdraw(req.Context(), &inputWithdrawal)
 	if err != nil {
 		switch {
-		case errors.Is(err, exceptions.NewBalanceNotEnoughBalanceError()):
+		case errors.Is(err, exceptions.ErrNotEnoughBalance):
 			res.WriteHeader(http.StatusPaymentRequired)
 			return
-		case errors.Is(err, exceptions.NewOrderBadIDFormatError()):
+		case errors.Is(err, exceptions.ErrOrderBadIDFormat):
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		default:

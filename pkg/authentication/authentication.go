@@ -10,7 +10,7 @@ import (
 
 type Authenticator struct {
 	secretKey string
-	tokenExp time.Duration
+	tokenExp  time.Duration
 }
 
 type Claims struct {
@@ -22,7 +22,7 @@ type Claims struct {
 func NewAuthenticator(secretKey string, tokenExp time.Duration) *Authenticator {
 	return &Authenticator{
 		secretKey: secretKey,
-		tokenExp: tokenExp,
+		tokenExp:  tokenExp,
 	}
 }
 
@@ -42,7 +42,6 @@ func (a *Authenticator) MakeJWT(ID uuid.UUID, login string) (*string, error) {
 
 	return &tokenString, nil
 }
-
 
 func (a *Authenticator) GetUserID(tokenStr string) (*uuid.UUID, error) {
 	claims := &Claims{}

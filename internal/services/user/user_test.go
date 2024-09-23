@@ -42,7 +42,7 @@ func TestRegister(t *testing.T) {
 				Login:    existingUser.Login,
 				Password: "testPass",
 			},
-			expectedSavingResult: exceptions.NewUserConflictError(),
+			expectedSavingResult: exceptions.ErrUserConflict,
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestLogin(t *testing.T) {
 				Login:    existingUser.Login,
 				Password: "invalid_password",
 			},
-			expectedSavingResult: exceptions.NewUserAuthenticationError(),
+			expectedSavingResult: exceptions.ErrUserAuthentication,
 		},
 		{
 			testName: "user doesn't exist",
@@ -106,7 +106,7 @@ func TestLogin(t *testing.T) {
 				Login:    "login_2",
 				Password: existingPassword,
 			},
-			expectedSavingResult: exceptions.NewUserAuthenticationError(),
+			expectedSavingResult: exceptions.ErrUserAuthentication,
 		},
 	}
 

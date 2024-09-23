@@ -42,13 +42,13 @@ func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 	err = oh.orderService.InsertOrder(req.Context(), userID, orderID)
 	if err != nil {
 		switch {
-		case errors.Is(err, exceptions.NewOrderConflictAnotherUserError()):
+		case errors.Is(err, exceptions.ErrOrderConflictAnotherUser):
 			res.WriteHeader(http.StatusConflict)
 			return
-		case errors.Is(err, exceptions.NewOrderConflictSameUserError()):
+		case errors.Is(err, exceptions.ErrOrderConflictSameUser):
 			res.WriteHeader(http.StatusOK)
 			return
-		case errors.Is(err, exceptions.NewOrderBadIDFormatError()):
+		case errors.Is(err, exceptions.ErrOrderBadIDFormat):
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		default:

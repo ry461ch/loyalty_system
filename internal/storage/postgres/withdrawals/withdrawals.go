@@ -118,7 +118,7 @@ func (wps *WithdrawalPGStorage) GetWithdrawal(ctx context.Context, ID uuid.UUID)
 	err := row.Scan(&withdrawalInDB.OrderID, &withdrawalInDB.Sum, &withdrawalInDB.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, exceptions.NewWithdrawalNotFoundError()
+			return nil, exceptions.ErrWithdrawalNotFound
 		}
 		return nil, err
 	}

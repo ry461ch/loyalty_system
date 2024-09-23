@@ -46,21 +46,21 @@ func TestSaveOrder(t *testing.T) {
 			testName:             "invalid order id",
 			userID:               uuid.New(),
 			orderID:              "1322a",
-			expectedSavingResult: exceptions.NewOrderBadIDFormatError(),
+			expectedSavingResult: exceptions.ErrOrderBadIDFormat,
 			expectedOrdersNum:    0,
 		},
 		{
 			testName:             "existing order id with another user",
 			userID:               uuid.New(),
 			orderID:              existingOrderID,
-			expectedSavingResult: exceptions.NewOrderConflictAnotherUserError(),
+			expectedSavingResult: exceptions.ErrOrderConflictAnotherUser,
 			expectedOrdersNum:    0,
 		},
 		{
 			testName:             "existing order id with same user",
 			userID:               existingUserID,
 			orderID:              existingOrderID,
-			expectedSavingResult: exceptions.NewOrderConflictSameUserError(),
+			expectedSavingResult: exceptions.ErrOrderConflictSameUser,
 			expectedOrdersNum:    1,
 		},
 	}
@@ -293,7 +293,7 @@ func TestUpdateOrder(t *testing.T) {
 				Status:  order.PROCESSED,
 				Accrual: &accrual,
 			},
-			expectedSavingResult: exceptions.NewOrderNotFoundError(),
+			expectedSavingResult: exceptions.ErrOrderNotFound,
 			expectedBalance:      existingBalance,
 		},
 	}

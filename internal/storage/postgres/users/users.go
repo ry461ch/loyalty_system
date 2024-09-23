@@ -72,7 +72,7 @@ func (ups *UserPGStorage) GetUser(ctx context.Context, login string) (*user.User
 	err := row.Scan(&userInDB.ID, &userInDB.Login, &userInDB.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, exceptions.NewUserNotFoundError()
+			return nil, exceptions.ErrUserNotFound
 		}
 		return nil, err
 	}

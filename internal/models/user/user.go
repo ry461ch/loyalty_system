@@ -28,7 +28,7 @@ func (u *InputUser) UnmarshalJSON(data []byte) error {
 	}
 
 	if aliasValue.Login == "" || aliasValue.Password == "" {
-		return exceptions.NewUserBadFormatError()
+		return exceptions.ErrUserBadFormat
 	}
 
 	return nil

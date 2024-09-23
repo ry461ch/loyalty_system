@@ -25,7 +25,7 @@ func (ums *UserMemStorage) InsertUser(ctx context.Context, inputUser *user.User,
 func (ums *UserMemStorage) GetUser(ctx context.Context, login string) (*user.User, error) {
 	val, ok := ums.users.Load(login)
 	if !ok {
-		return nil, exceptions.NewUserNotFoundError()
+		return nil, exceptions.ErrUserNotFound
 	}
 	userInDB := val.(user.User)
 	return &userInDB, nil

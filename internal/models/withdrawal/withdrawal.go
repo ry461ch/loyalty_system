@@ -31,10 +31,10 @@ func (w *Withdrawal) UnmarshalJSON(data []byte) error {
 	}
 
 	if aliasValue.Sum == 0 {
-		return exceptions.NewBalanceBadAmountFormatError()
+		return exceptions.ErrBalanceBadAmountFormat
 	}
 	if aliasValue.UserID != nil || aliasValue.ID != nil || aliasValue.CreatedAt != nil {
-		return exceptions.NewWithdrawalBadFormatError()
+		return exceptions.ErrWithdrawalBadFormat
 	}
 
 	w.OrderID = aliasValue.OrderID

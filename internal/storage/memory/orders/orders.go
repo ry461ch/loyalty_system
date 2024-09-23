@@ -25,7 +25,7 @@ func NewOrderMemStorage() *OrderMemStorage {
 func (oms *OrderMemStorage) GetOrderUserID(ctx context.Context, orderID string) (*uuid.UUID, error) {
 	val, ok := oms.ordersToUsersMap.Load(orderID)
 	if !ok {
-		return nil, exceptions.NewOrderNotFoundError()
+		return nil, exceptions.ErrOrderNotFound
 	}
 	userID := val.(uuid.UUID)
 	return &userID, nil
@@ -52,13 +52,13 @@ func (oms *OrderMemStorage) InsertOrder(ctx context.Context, userID uuid.UUID, o
 func (oms *OrderMemStorage) UpdateOrder(ctx context.Context, newOrder *order.Order, trx *transaction.Trx) (*uuid.UUID, error) {
 	val, ok := oms.ordersToUsersMap.Load(newOrder.ID)
 	if !ok {
-		return nil, exceptions.NewOrderNotFoundError()
+		return nil, exceptions.ErrOrderNotFound
 	}
 	userID := val.(uuid.UUID)
 
 	val, ok = oms.usersToOrdersMap.Load(userID)
 	if !ok {
-		return nil, exceptions.NewOrderNotFoundError()
+		return nil, exceptions.ErrOrderNotFound
 	}
 	userOrders := val.(map[string]order.Order)
 	userOrders[newOrder.ID] = *newOrder

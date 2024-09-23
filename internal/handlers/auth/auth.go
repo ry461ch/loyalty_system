@@ -39,7 +39,7 @@ func (ah *AuthHandlers) Register(res http.ResponseWriter, req *http.Request) {
 	tokenStr, err := ah.userService.Register(req.Context(), &inputUser)
 	if err != nil {
 		switch {
-		case errors.Is(err, exceptions.NewUserConflictError()):
+		case errors.Is(err, exceptions.ErrUserConflict):
 			res.WriteHeader(http.StatusConflict)
 			return
 		default:
@@ -69,7 +69,7 @@ func (ah *AuthHandlers) Login(res http.ResponseWriter, req *http.Request) {
 	tokenStr, err := ah.userService.Login(req.Context(), &inputUser)
 	if err != nil {
 		switch {
-		case errors.Is(err, exceptions.NewUserAuthenticationError()):
+		case errors.Is(err, exceptions.ErrUserAuthentication):
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		default:

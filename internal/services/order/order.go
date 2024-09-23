@@ -36,17 +36,17 @@ func (os *OrderService) GetWaitingOrders(ctx context.Context, limit int, created
 
 func (os *OrderService) InsertOrder(ctx context.Context, userID uuid.UUID, orderID string) error {
 	if !orderhelpers.ValidateOrderID(orderID) {
-		return exceptions.NewOrderBadIDFormatError()
+		return exceptions.ErrOrderBadIDFormat
 	}
 
 	orderUserID, err := os.orderStorage.GetOrderUserID(ctx, orderID)
 	if orderUserID != nil {
 		if orderUserID.String() == userID.String() {
-			return exceptions.NewOrderConflictSameUserError()
+			return exceptions.ErrOrderConflictSameUser
 		}
-		return exceptions.NewOrderConflictAnotherUserError()
+		return exceptions.ErrOrderConflictAnotherUser
 	}
-	if err != nil && !errors.Is(err, exceptions.NewOrderNotFoundError()) {
+	if err != nil && !errors.Is(err, exceptions.ErrOrderNotFound) {
 		return err
 	}
 

@@ -62,7 +62,7 @@ func (wms *WithdrawalMemStorage) GetWithdrawals(ctx context.Context, userID uuid
 func (wms *WithdrawalMemStorage) GetWithdrawal(ctx context.Context, ID uuid.UUID) (*withdrawal.Withdrawal, error) {
 	userVal, ok := wms.withdrawalsToUsersMap.Load(ID)
 	if !ok {
-		return nil, exceptions.NewWithdrawalNotFoundError()
+		return nil, exceptions.ErrWithdrawalNotFound
 	}
 	userID := userVal.(uuid.UUID)
 

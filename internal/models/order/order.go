@@ -30,7 +30,7 @@ func (s Status) MarshalJSON() ([]byte, error) {
 	case PROCESSED:
 		return []byte("\"PROCESSED\""), nil
 	default:
-		return nil, exceptions.NewOrderBadStatusFormatError()
+		return nil, exceptions.ErrOrderBadStatusFormat
 	}
 }
 
@@ -87,7 +87,7 @@ func (s *Status) UnmarshalJSON(data []byte) error {
 	case bytes.Equal(data, []byte("\"PROCESSED\"")):
 		*s = PROCESSED
 	default:
-		return exceptions.NewOrderBadStatusFormatError()
+		return exceptions.ErrOrderBadStatusFormat
 	}
 	return nil
 }

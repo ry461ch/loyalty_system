@@ -75,7 +75,7 @@ func (ops *OrderPGStorage) GetOrderUserID(ctx context.Context, orderID string) (
 	err := row.Scan(&userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, exceptions.NewOrderNotFoundError()
+			return nil, exceptions.ErrOrderNotFound
 		}
 		return nil, err
 	}
