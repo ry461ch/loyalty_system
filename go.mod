@@ -1,6 +1,6 @@
 module github.com/ry461ch/loyalty_system
 
-go 1.22.3
+go 1.22.5
 
 require (
 	github.com/caarlos0/env/v11 v11.2.2
