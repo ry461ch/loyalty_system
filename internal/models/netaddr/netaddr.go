@@ -24,6 +24,8 @@ func (na *NetAddress) Set(s string) error {
 		return nil
 	}
 
+	s, _ = strings.CutPrefix(s, "http://")
+
 	hp := strings.Split(s, ":")
 	switch len(hp) {
 	case 1:

@@ -3,6 +3,7 @@ package ordersender
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
+	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/netaddr"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
@@ -96,7 +98,7 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 	for {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("graceful shutdown worker %d", workerID)
+			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
 		case orderID := <-orderIDsChannel:
 			if orderID == "" {
 				return nil
@@ -112,15 +114,14 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 
 			select {
 			case <-ctx.Done():
-				return fmt.Errorf("graceful shutdown worker %d", workerID)
+				return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
 			case updatedOrders <- *updatedOrder:
-				break
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("graceful shutdown worker %d", workerID)
+			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
 		case <-ticker.C:
 		}
 	}
@@ -136,6 +137,10 @@ func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-c
 			func() error {
 				err := os.getOrderFromAccrualWorker(ctx, workerID, orderIDsChannel, updatedOrders)
 				if err != nil {
+					if errors.Is(err, exceptions.ErrGracefullyShutDown) {
+						logging.Logger.Info("Order Sender:  worker %d gracefully shutdown", workerID)
+						return nil
+					}
 					logging.Logger.Errorf("Order Sender: %v", err)
 				}
 				return err
@@ -147,6 +152,6 @@ func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-c
 		return err
 	}
 
-	logging.Logger.Info("Order Sender: successfully handled all orders")
+	logging.Logger.Info("Order Sender: gracefully shutdown")
 	return nil
 }

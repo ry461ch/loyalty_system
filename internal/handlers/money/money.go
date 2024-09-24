@@ -104,6 +104,7 @@ func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	res.Write(resp)
 }
@@ -129,6 +130,8 @@ func (mh *MoneyHandlers) GetBalance(res http.ResponseWriter, req *http.Request) 
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	res.Write(resp)
 }

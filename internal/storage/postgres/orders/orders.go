@@ -24,7 +24,7 @@ func getDDL() string {
 		CREATE TABLE IF NOT EXISTS content.orders (
 			id VARCHAR(255) PRIMARY KEY,
 			status VARCHAR(255) NOT NULL default 'NEW',
-			accrual	INTEGER,
+			accrual	DOUBLE PRECISION,
 			user_id UUID NOT NULL,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

@@ -2,12 +2,14 @@ package orderupdater
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
+	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/internal/services"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
@@ -32,7 +34,7 @@ func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, upd
 	for {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("graceful shutdown worker %d", workerID)
+			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
 		case updatedOrder := <-updatedOrders:
 			if updatedOrder.ID == "" {
 				return nil
@@ -47,7 +49,7 @@ func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, upd
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("graceful shutdown worker %d", workerID)
+			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
 		case <-ticker.C:
 		}
 	}
@@ -63,7 +65,11 @@ func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan o
 			func() error {
 				err := ou.updateOrderWorker(ctx, workerID, updatedOrders)
 				if err != nil {
-					logging.Logger.Errorf("Order Updater: exception occured %v", err)
+					if errors.Is(err, exceptions.ErrGracefullyShutDown) {
+						logging.Logger.Infof("Order Updater: worker %d gracefully shutdown", workerID)
+						return nil
+					}
+					logging.Logger.Errorf("Order Updater: %v", err)
 				}
 				return err
 			},
@@ -74,6 +80,6 @@ func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan o
 		return err
 	}
 
-	logging.Logger.Info("Order Updater: successfully handled all orders")
+	logging.Logger.Info("Order Updater: gracefully shutdown")
 	return nil
 }

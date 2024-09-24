@@ -24,7 +24,7 @@ func getDDL() string {
 			id UUID PRIMARY KEY,
 			order_id VARCHAR(255) NOT NULL,
 			user_id UUID NOT NULL,
-			sum	INTEGER NOT NULL,
+			sum	DOUBLE PRECISION NOT NULL,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 
@@ -82,7 +82,7 @@ func (wps *WithdrawalPGStorage) GetWithdrawals(ctx context.Context, userID uuid.
 		WHERE user_id = $1
 		ORDER BY created_at DESC;
 	`
-	rows, err := wps.DB.QueryContext(ctx, getWithdrawalsFromDB, userID.String())
+	rows, err := wps.DB.QueryContext(ctx, getWithdrawalsFromDB, userID)
 	if err != nil {
 		return nil, err
 	}

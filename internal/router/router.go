@@ -43,7 +43,7 @@ func NewRouter(
 			})
 
 			r.Route("/withdrawals", func(r chi.Router) {
-				r.Use(compressor.GzipHandle, contenttypes.ValidatePlainContentType)
+				r.Use(compressor.GzipHandle, contenttypes.ValidateJSONContentType)
 				r.Get("/", moneyHandlers.GetWithdrawals)
 			})
 

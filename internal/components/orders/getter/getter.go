@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
+	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/services"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
@@ -29,7 +30,7 @@ func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDs
 	if createdAt != nil {
 		logging.Logger.Infof("Order Getter: got %d orders with createdAt less than %s", len(waitingOrders), createdAt.String())
 	} else {
-		logging.Logger.Infof("Order Getter: got %d orders without input createdAt", len(waitingOrders))
+		logging.Logger.Infof("Order Getter: got %d orders", len(waitingOrders))
 	}
 
 	if err != nil {
@@ -39,7 +40,7 @@ func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDs
 	for _, waitingOrder := range waitingOrders {
 		select {
 		case <-ctx.Done():
-			return nil, errors.New("graceful shutdown")
+			return nil, exceptions.ErrGracefullyShutDown
 		case orderIDsChannel <- waitingOrder.ID:
 		}
 	}
@@ -60,18 +61,23 @@ func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel c
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.New("graceful shutdown getter waiting orders")
+			logging.Logger.Infof("Order Getter: gracefully shutdown")
+			return nil
 		case <-ticker.C:
 			var err error
 			createdAt, err = og.getWaitingOrderIDsIteration(ctx, orderIDsChannel, createdAt)
 			if err != nil {
+				if errors.Is(err, exceptions.ErrGracefullyShutDown) {
+					logging.Logger.Infof("Order Getter: gracefully shutdown")
+					return nil
+				}
 				logging.Logger.Errorf("Order Getter: exceptions occured while getting waiting orders: %s", err.Error())
 				return err
 			}
 		}
 
 		if createdAt == nil {
-			logging.Logger.Infof("Order Getter: successfully ending")
+			logging.Logger.Infof("Order Getter: gracefully shutdown")
 			return nil
 		}
 	}

@@ -24,7 +24,6 @@ func NewOrderHandlers(orderService services.OrderService) *OrderHandlers {
 }
 
 func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
-	logging.Logger.Infoln("Im here and wtf????????????????????????????/")
 	userID, err := uuid.Parse(req.Header.Get("X-User-Id"))
 	if err != nil {
 		logging.Logger.Errorf("New order: internal error: %v", err)
@@ -86,6 +85,7 @@ func (oh *OrderHandlers) GetOrders(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	res.Write(resp)
 }
