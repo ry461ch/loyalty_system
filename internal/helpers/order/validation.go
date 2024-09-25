@@ -17,7 +17,10 @@ func ValidateOrderID(orderID string) bool {
 	}
 
 	for ; idx < len(orderID); idx += 2 {
-		num, _ := strconv.Atoi(string(orderID[idx]))
+		num, err := strconv.Atoi(string(orderID[idx]))
+		if err != nil {
+			return false
+		}
 		num *= 2
 		if num > 9 {
 			num -= 9

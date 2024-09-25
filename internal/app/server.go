@@ -65,7 +65,10 @@ func (s *Server) Run() {
 	// run server
 	go func() {
 		logging.Logger.Info("Server is running: ", s.cfg.Addr.String())
-		s.server.ListenAndServe()
+		err = s.server.ListenAndServe()
+		if err != nil {
+			logging.Logger.Errorf("Server: something went wrong while serving: %v", err)
+		}
 		logging.Logger.Infof("Server: stopped")
 		wg.Done()
 	}()
@@ -74,7 +77,10 @@ func (s *Server) Run() {
 	orderEnricherCtx, orderEnricherCtxCancel := context.WithCancel(context.Background())
 	go func() {
 		logging.Logger.Infof("Server: order enricher started")
-		s.orderEnricher.Run(orderEnricherCtx)
+		err = s.orderEnricher.Run(orderEnricherCtx)
+		if err != nil {
+			logging.Logger.Errorf("Server: something went wrong while running order enricher: %v", err)
+		}
 		logging.Logger.Infof("Server: order enricher stopped")
 		wg.Done()
 	}()
@@ -85,7 +91,10 @@ func (s *Server) Run() {
 		signal.Notify(stop, os.Interrupt)
 		<-stop
 		logging.Logger.Infof("Server: got interrupt signal")
-		s.server.Shutdown(context.Background())
+		err = s.server.Shutdown(context.Background())
+		if err != nil {
+			logging.Logger.Errorf("Server: something went wrong while shutting down server: %v", err)
+		}
 		orderEnricherCtxCancel()
 		wg.Done()
 	}()

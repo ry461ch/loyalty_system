@@ -37,19 +37,19 @@ func (ah *AuthHandlers) Register(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tokenStr, err := ah.userService.Register(req.Context(), &inputUser)
-	if err != nil {
-		switch {
-		case errors.Is(err, exceptions.ErrUserConflict):
-			res.WriteHeader(http.StatusConflict)
-			return
-		default:
-			logging.Logger.Errorf("Register: internal error: %v", err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if err == nil {
+		res.Header().Set("Authorization", *tokenStr)
+		res.WriteHeader(http.StatusOK)
+		return
 	}
-	res.Header().Set("Authorization", *tokenStr)
-	res.WriteHeader(http.StatusOK)
+
+	switch {
+	case errors.Is(err, exceptions.ErrUserConflict):
+		res.WriteHeader(http.StatusConflict)
+	default:
+		logging.Logger.Errorf("Register: internal error: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (ah *AuthHandlers) Login(res http.ResponseWriter, req *http.Request) {
@@ -67,17 +67,18 @@ func (ah *AuthHandlers) Login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tokenStr, err := ah.userService.Login(req.Context(), &inputUser)
-	if err != nil {
-		switch {
-		case errors.Is(err, exceptions.ErrUserAuthentication):
-			res.WriteHeader(http.StatusUnauthorized)
-			return
-		default:
-			logging.Logger.Errorf("Login: internal error: %v", err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+
+	if err == nil {
+		res.Header().Set("Authorization", *tokenStr)
+		res.WriteHeader(http.StatusOK)
+		return
 	}
-	res.Header().Set("Authorization", *tokenStr)
-	res.WriteHeader(http.StatusOK)
+
+	switch {
+	case errors.Is(err, exceptions.ErrUserAuthentication):
+		res.WriteHeader(http.StatusUnauthorized)
+	default:
+		logging.Logger.Errorf("Login: internal error: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 }

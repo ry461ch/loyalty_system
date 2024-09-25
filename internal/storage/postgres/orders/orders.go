@@ -45,11 +45,7 @@ func NewOrderPGStorage(DBDsn string) *OrderPGStorage {
 
 func (ops *OrderPGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 	if DB == nil {
-		newDB, err := sql.Open("pgx", ops.dsn)
-		if err != nil {
-			return err
-		}
-		DB = newDB
+		return errors.New("db wasn't initialized")
 	}
 	ops.DB = DB
 

@@ -43,11 +43,7 @@ func NewWithdrawalPGStorage(DBDsn string) *WithdrawalPGStorage {
 
 func (wps *WithdrawalPGStorage) Initialize(ctx context.Context, DB *sql.DB) error {
 	if DB == nil {
-		newDB, err := sql.Open("pgx", wps.dsn)
-		if err != nil {
-			return err
-		}
-		DB = newDB
+		return errors.New("db wasn't initialized")
 	}
 	wps.DB = DB
 

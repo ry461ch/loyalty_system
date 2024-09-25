@@ -39,24 +39,22 @@ func (oh *OrderHandlers) PostOrder(res http.ResponseWriter, req *http.Request) {
 	orderID := string(reqBody)
 
 	err = oh.orderService.InsertOrder(req.Context(), userID, orderID)
-	if err != nil {
-		switch {
-		case errors.Is(err, exceptions.ErrOrderConflictAnotherUser):
-			res.WriteHeader(http.StatusConflict)
-			return
-		case errors.Is(err, exceptions.ErrOrderConflictSameUser):
-			res.WriteHeader(http.StatusOK)
-			return
-		case errors.Is(err, exceptions.ErrOrderBadIDFormat):
-			res.WriteHeader(http.StatusUnprocessableEntity)
-			return
-		default:
-			logging.Logger.Errorf("New order: internal error: %v", err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if err == nil {
+		res.WriteHeader(http.StatusAccepted)
+		return
 	}
-	res.WriteHeader(http.StatusAccepted)
+
+	switch {
+	case errors.Is(err, exceptions.ErrOrderConflictAnotherUser):
+		res.WriteHeader(http.StatusConflict)
+	case errors.Is(err, exceptions.ErrOrderConflictSameUser):
+		res.WriteHeader(http.StatusOK)
+	case errors.Is(err, exceptions.ErrOrderBadIDFormat):
+		res.WriteHeader(http.StatusUnprocessableEntity)
+	default:
+		logging.Logger.Errorf("New order: internal error: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (oh *OrderHandlers) GetOrders(res http.ResponseWriter, req *http.Request) {

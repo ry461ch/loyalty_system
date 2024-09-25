@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
-
-	"golang.org/x/sync/errgroup"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
@@ -31,20 +30,22 @@ func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, upd
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	for {
+	for updatedOrder := range updatedOrders {
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
-		case updatedOrder := <-updatedOrders:
-			if updatedOrder.ID == "" {
-				return nil
-			}
+		default:
+		}
 
-			err := ou.orderService.UpdateOrder(ctx, &updatedOrder)
-			if err != nil {
-				logging.Logger.Warnf("Order Updater: exceptions occured for orderID: %s: %s", updatedOrder.ID, err.Error())
-				return nil
-			}
+		if updatedOrder.ID == "" {
+			// if channel closed
+			return nil
+		}
+
+		err := ou.orderService.UpdateOrder(ctx, &updatedOrder)
+		if err != nil {
+			logging.Logger.Warnf("Order Updater: exceptions occured for orderID: %s: %s", updatedOrder.ID, err.Error())
+			return nil
 		}
 
 		select {
@@ -53,32 +54,34 @@ func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, upd
 		case <-ticker.C:
 		}
 	}
+	return nil
 }
 
 func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan order.Order) error {
 	logging.Logger.Infof("Order Updater: init with %d workers", ou.workersNum)
-	wg := new(errgroup.Group)
+	var wg sync.WaitGroup
+	wg.Add(ou.workersNum)
 
 	for w := 0; w < ou.workersNum; w++ {
 		workerID := w
-		wg.Go(
-			func() error {
-				err := ou.updateOrderWorker(ctx, workerID, updatedOrders)
-				if err != nil {
-					if errors.Is(err, exceptions.ErrGracefullyShutDown) {
-						logging.Logger.Infof("Order Updater: worker %d gracefully shutdown", workerID)
-						return nil
-					}
-					logging.Logger.Errorf("Order Updater: %v", err)
+		go func() {
+			err := ou.updateOrderWorker(ctx, workerID, updatedOrders)
+			if err != nil {
+				if errors.Is(err, exceptions.ErrGracefullyShutDown) {
+					logging.Logger.Infof("Order Updater: worker %d gracefully shutdown", workerID)
+					wg.Done()
+					return
 				}
-				return err
-			},
-		)
+				logging.Logger.Errorf("Order Updater: %v", err)
+				wg.Done()
+				return
+			}
+			logging.Logger.Info("Order Updater:  worker %d successfully ended his work", workerID)
+			wg.Done()
+		}()
 	}
 
-	if err := wg.Wait(); err != nil {
-		return err
-	}
+	wg.Wait()
 
 	logging.Logger.Info("Order Updater: gracefully shutdown")
 	return nil

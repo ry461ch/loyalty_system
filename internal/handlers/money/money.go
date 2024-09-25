@@ -60,21 +60,20 @@ func (mh *MoneyHandlers) PostWithdrawal(res http.ResponseWriter, req *http.Reque
 	inputWithdrawal.UserID = &userID
 
 	err = mh.moneyService.Withdraw(req.Context(), &inputWithdrawal)
-	if err != nil {
-		switch {
-		case errors.Is(err, exceptions.ErrNotEnoughBalance):
-			res.WriteHeader(http.StatusPaymentRequired)
-			return
-		case errors.Is(err, exceptions.ErrOrderBadIDFormat):
-			res.WriteHeader(http.StatusUnprocessableEntity)
-			return
-		default:
-			logging.Logger.Errorf("Withdraw: internal error: %v", err)
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if err == nil {
+		res.WriteHeader(http.StatusOK)
+		return
 	}
-	res.WriteHeader(http.StatusOK)
+
+	switch {
+	case errors.Is(err, exceptions.ErrNotEnoughBalance):
+		res.WriteHeader(http.StatusPaymentRequired)
+	case errors.Is(err, exceptions.ErrOrderBadIDFormat):
+		res.WriteHeader(http.StatusUnprocessableEntity)
+	default:
+		logging.Logger.Errorf("Withdraw: internal error: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (mh *MoneyHandlers) GetWithdrawals(res http.ResponseWriter, req *http.Request) {

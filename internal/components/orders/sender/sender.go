@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
@@ -95,28 +95,30 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	for {
+	for orderID := range orderIDsChannel {
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
-		case orderID := <-orderIDsChannel:
-			if orderID == "" {
-				return nil
-			}
-			updatedOrder, err := os.getOrderFromAccrual(ctx, orderID)
-			if err != nil {
-				logging.Logger.Warnf("Order Sender: exceptions occured for orderID: %s: %v", orderID, err)
-				break
-			}
-			if updatedOrder == nil {
-				break
-			}
+		default:
+		}
 
-			select {
-			case <-ctx.Done():
-				return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
-			case updatedOrders <- *updatedOrder:
-			}
+		if orderID == "" {
+			// if channel closed
+			return nil
+		}
+		updatedOrder, err := os.getOrderFromAccrual(ctx, orderID)
+		if err != nil {
+			logging.Logger.Warnf("Order Sender: exceptions occured for orderID: %s: %v", orderID, err)
+			break
+		}
+		if updatedOrder == nil {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
+		case updatedOrders <- *updatedOrder:
 		}
 
 		select {
@@ -125,33 +127,34 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 		case <-ticker.C:
 		}
 	}
+	return nil
 }
 
 func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) error {
 	logging.Logger.Infof("Order Sender: init with %d workers", os.workersNum)
-	wg := new(errgroup.Group)
+	var wg sync.WaitGroup
+	wg.Add(os.workersNum)
 
 	for w := 0; w < os.workersNum; w++ {
 		workerID := w
-		wg.Go(
-			func() error {
-				err := os.getOrderFromAccrualWorker(ctx, workerID, orderIDsChannel, updatedOrders)
-				if err != nil {
-					if errors.Is(err, exceptions.ErrGracefullyShutDown) {
-						logging.Logger.Info("Order Sender:  worker %d gracefully shutdown", workerID)
-						return nil
-					}
-					logging.Logger.Errorf("Order Sender: %v", err)
+		go func() {
+			err := os.getOrderFromAccrualWorker(ctx, workerID, orderIDsChannel, updatedOrders)
+			if err != nil {
+				if errors.Is(err, exceptions.ErrGracefullyShutDown) {
+					logging.Logger.Info("Order Sender:  worker %d gracefully shutdown", workerID)
+					wg.Done()
+					return
 				}
-				return err
-			},
-		)
+				logging.Logger.Errorf("Order Sender: %v", err)
+				wg.Done()
+				return
+			}
+			logging.Logger.Info("Order Sender:  worker %d successfully ended his work", workerID)
+			wg.Done()
+		}()
 	}
 
-	if err := wg.Wait(); err != nil {
-		return err
-	}
-
+	wg.Wait()
 	logging.Logger.Info("Order Sender: gracefully shutdown")
 	return nil
 }
