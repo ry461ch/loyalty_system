@@ -43,8 +43,8 @@ func (ps *PGStorage) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	DB.SetMaxIdleConns(ps.connectionsNum)
-	DB.SetMaxOpenConns(ps.connectionsNum)
+	DB.SetMaxIdleConns(ps.connectionsLimit)
+	DB.SetMaxOpenConns(ps.connectionsLimit)
 
 	requests := strings.Split(getDDL(), ";")
 	for _, request := range requests {
