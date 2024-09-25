@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ry461ch/loyalty_system/internal/helpers/transaction"
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
-	"github.com/ry461ch/loyalty_system/internal/storage/transaction"
 )
 
 type BalanceMemStorage struct {

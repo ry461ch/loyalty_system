@@ -1,11 +1,11 @@
-package ordercomponents
+package ordercomponentsimpl
 
 import (
 	"github.com/ry461ch/loyalty_system/internal/components/orders/getter"
 	"github.com/ry461ch/loyalty_system/internal/components/orders/sender"
 	"github.com/ry461ch/loyalty_system/internal/components/orders/updater"
 	"github.com/ry461ch/loyalty_system/internal/config"
-	"github.com/ry461ch/loyalty_system/internal/services"
+	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
 )
 
 type OrderComponents struct {

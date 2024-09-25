@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"net/http"
-)
+import "net/http"
 
 type AuthHandlers interface {
 	Register(res http.ResponseWriter, req *http.Request)

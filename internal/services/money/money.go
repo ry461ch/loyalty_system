@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/ry461ch/loyalty_system/internal/helpers/order"
+	"github.com/ry461ch/loyalty_system/internal/helpers/transaction"
+	"github.com/ry461ch/loyalty_system/internal/interfaces/storage"
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
-	"github.com/ry461ch/loyalty_system/internal/storage"
-	"github.com/ry461ch/loyalty_system/internal/storage/transaction"
 )
 
 type MoneyService struct {

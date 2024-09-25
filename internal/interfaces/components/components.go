@@ -1,4 +1,4 @@
-package ordercomponents
+package components
 
 import (
 	"context"

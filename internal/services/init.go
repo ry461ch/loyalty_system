@@ -1,10 +1,10 @@
 package servicesimpl
 
 import (
+	"github.com/ry461ch/loyalty_system/internal/interfaces/storage"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/services/order"
 	"github.com/ry461ch/loyalty_system/internal/services/user"
-	"github.com/ry461ch/loyalty_system/internal/storage"
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
 )
 

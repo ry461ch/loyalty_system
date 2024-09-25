@@ -5,11 +5,28 @@ services:
     image: postgres:${DB_VERSION:-14}
     container_name: ${DB_CONTAINER_NAME:-db}
     expose:
-      - ${DB_INTERNAL_PORT:-5432}
-    ports:
-      - ${DB_EXTERNAL_PORT:-5432}:${DB_INTERNAL_PORT:-5432}
+      - ${DB_PORT:-5432}
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-      PGPORT: ${DB_INTERNAL_PORT:-5432}
+      PGPORT: ${DB_PORT:-5432}
+
+  gophermart:
+    build:
+      context: ./
+      args:
+        GOPHERMART_PORT: ${GOPHERMART_PORT:-8080}
+    environment:
+      GOPHERMART_PORT: ${GOPHERMART_PORT:-8080}
+      DATABASE_URI: postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_CONTAINER_NAME:-db}:${DB_PORT:-5432}/${DB_NAME}?sslmode=disable
+      RUN_ADDRESS: 127.0.0.1:${GOPHERMART_PORT:-8080}
+      ACCRUAL_SYSTEM_ADDRESS: ${ACCRUAL_CONTAINER_NAME:-accrual}:${ACCRUAL_PORT:-8081}
+    expose:
+      - ${GOPHERMART_PORT:-8080}
+    ports:
+      - ${GOPHERMART_PORT:-8080}:${GOPHERMART_PORT:-8080}
+    command: |
+      -a 127.0.0.1:${GOPHERMART_PORT:-8080}
+      -r ${ACCRUAL_CONTAINER_NAME:-accrual}:${ACCRUAL_PORT:-8081}
+      -d postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_CONTAINER_NAME:-db}:${DB_PORT:-5432}/${DB_NAME}?sslmode=disable

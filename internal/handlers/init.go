@@ -4,7 +4,7 @@ import (
 	"github.com/ry461ch/loyalty_system/internal/handlers/auth"
 	"github.com/ry461ch/loyalty_system/internal/handlers/money"
 	"github.com/ry461ch/loyalty_system/internal/handlers/orders"
-	"github.com/ry461ch/loyalty_system/internal/services"
+	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
 )
 
 type Handlers struct {

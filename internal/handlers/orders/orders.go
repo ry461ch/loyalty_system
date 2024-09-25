@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
-	"github.com/ry461ch/loyalty_system/internal/services"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 

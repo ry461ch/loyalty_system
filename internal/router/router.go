@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ry461ch/loyalty_system/internal/handlers"
+	"github.com/ry461ch/loyalty_system/internal/interfaces/handlers"
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
 	"github.com/ry461ch/loyalty_system/pkg/authentication/middleware"
 	"github.com/ry461ch/loyalty_system/pkg/logging/middleware"

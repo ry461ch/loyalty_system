@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/ry461ch/loyalty_system/internal/helpers/transaction"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
-	"github.com/ry461ch/loyalty_system/internal/storage/transaction"
 )
 
 type UserPGStorage struct {

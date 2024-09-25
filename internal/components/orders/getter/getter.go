@@ -6,18 +6,18 @@ import (
 	"time"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
+	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
-	"github.com/ry461ch/loyalty_system/internal/services"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type OrderGetter struct {
-	orderService   services.OrderService
+	orderService   services.WaitingOrdersGetterService
 	getOrdersLimit int
 	rateLimit      int
 }
 
-func NewOrderGetter(orderService services.OrderService, cfg *config.Config) *OrderGetter {
+func NewOrderGetter(orderService services.WaitingOrdersGetterService, cfg *config.Config) *OrderGetter {
 	return &OrderGetter{
 		orderService:   orderService,
 		getOrdersLimit: cfg.OrderGetterOrdersLimit,

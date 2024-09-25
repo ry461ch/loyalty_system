@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/ry461ch/loyalty_system/internal/helpers/transaction"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
-	"github.com/ry461ch/loyalty_system/internal/storage/transaction"
 )
 
 type WithdrawalPGStorage struct {
