@@ -57,7 +57,7 @@ func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, upd
 	return nil
 }
 
-func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan order.Order) error {
+func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan order.Order) {
 	logging.Logger.Infof("Order Updater: init with %d workers", ou.workersNum)
 	var wg sync.WaitGroup
 	wg.Add(ou.workersNum)
@@ -84,5 +84,4 @@ func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan o
 	wg.Wait()
 
 	logging.Logger.Info("Order Updater: gracefully shutdown")
-	return nil
 }

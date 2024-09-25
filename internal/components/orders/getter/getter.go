@@ -52,7 +52,7 @@ func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDs
 	return &waitingOrders[len(waitingOrders)-1].CreatedAt, nil
 }
 
-func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string) error {
+func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string) {
 	logging.Logger.Infof("Order Getter: initiated")
 	var createdAt *time.Time
 	ticker := time.NewTicker(time.Second / time.Duration(og.rateLimit))
@@ -62,23 +62,23 @@ func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel c
 		select {
 		case <-ctx.Done():
 			logging.Logger.Infof("Order Getter: gracefully shutdown")
-			return nil
+			return
 		case <-ticker.C:
 			var err error
 			createdAt, err = og.getWaitingOrderIDsIteration(ctx, orderIDsChannel, createdAt)
 			if err != nil {
 				if errors.Is(err, exceptions.ErrGracefullyShutDown) {
 					logging.Logger.Infof("Order Getter: gracefully shutdown")
-					return nil
+					return
 				}
 				logging.Logger.Errorf("Order Getter: exceptions occured while getting waiting orders: %s", err.Error())
-				return err
+				return
 			}
 		}
 
 		if createdAt == nil {
 			logging.Logger.Infof("Order Getter: gracefully shutdown")
-			return nil
+			return
 		}
 	}
 }

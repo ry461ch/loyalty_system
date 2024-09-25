@@ -46,28 +46,19 @@ func (oe *OrderEnricher) runIteration(ctx context.Context) {
 	wg.Add(3)
 
 	go func() {
-		err := oe.orderGetter.GetWaitingOrderIDs(ctx, orderIDsChannel)
-		if err != nil {
-			logging.Logger.Errorf("Order Enricher: error occured in order getter: %v", err)
-		}
+		oe.orderGetter.GetWaitingOrderIDs(ctx, orderIDsChannel)
 		close(orderIDsChannel)
 		wg.Done()
 	}()
 
 	go func() {
-		err := oe.orderSender.GetUpdatedOrders(ctx, orderIDsChannel, updatedOrders)
-		if err != nil {
-			logging.Logger.Errorf("Order Enricher: error occured in order sender: %v", err)
-		}
+		oe.orderSender.GetUpdatedOrders(ctx, orderIDsChannel, updatedOrders)
 		close(updatedOrders)
 		wg.Done()
 	}()
 
 	go func() {
-		err := oe.orderUpdater.UpdateOrders(ctx, updatedOrders)
-		if err != nil {
-			logging.Logger.Errorf("Order Enricher: error occured in order updater: %v", err)
-		}
+		oe.orderUpdater.UpdateOrders(ctx, updatedOrders)
 		wg.Done()
 	}()
 

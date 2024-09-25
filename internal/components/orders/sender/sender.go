@@ -130,7 +130,7 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 	return nil
 }
 
-func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) error {
+func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) {
 	logging.Logger.Infof("Order Sender: init with %d workers", os.workersNum)
 	var wg sync.WaitGroup
 	wg.Add(os.workersNum)
@@ -156,5 +156,4 @@ func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-c
 
 	wg.Wait()
 	logging.Logger.Info("Order Sender: gracefully shutdown")
-	return nil
 }

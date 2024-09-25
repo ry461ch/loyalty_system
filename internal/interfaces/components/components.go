@@ -7,13 +7,13 @@ import (
 )
 
 type OrderUpdater interface {
-	UpdateOrders(ctx context.Context, updatedOrders <-chan order.Order) error
+	UpdateOrders(ctx context.Context, updatedOrders <-chan order.Order)
 }
 
 type OrderGetter interface {
-	GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string) error
+	GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string)
 }
 
 type OrderSender interface {
-	GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) error
+	GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order)
 }
