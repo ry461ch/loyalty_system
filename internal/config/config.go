@@ -19,6 +19,7 @@ type Config struct {
 	LogLevel                  string             `env:"LOG_LEVEL"`
 	JWTSecretKey              string             `env:"SECRET_KEY"`
 	TokenExp                  time.Duration      `env:"TOKEN_EXP"`
+	ConnectionsLimit          int                `env:"CONNECTIONS_LIMIT"`
 	OrderUpdaterRateLimit     int                `env:"ORDER_UPDATER_RATE_LIMIT"`
 	OrderGetterOrdersLimit    int                `env:"ORDER_GETTER_ORDERS_LIMIT"`
 	OrderGetterRateLimit      int                `env:"ORDER_GETTER_RATE_LIMIT"`
@@ -58,6 +59,7 @@ func parseArgs(cfg *Config) {
 	flag.StringVar(&cfg.LogLevel, "log-level", "INFO", "Log level")
 	flag.StringVar(&cfg.JWTSecretKey, "secret-key", generateJWTKey(), "jwt secret key")
 	flag.DurationVar(&cfg.TokenExp, "token-exp", time.Hour*24, "token expiration time")
+	flag.IntVar(&cfg.ConnectionsLimit, "connections-limit", 100, "limit of postgres connections")
 	flag.DurationVar(&cfg.OrderEnricherPeriod, "order-enricher-period", time.Second*10, "period of running order enricher")
 	flag.DurationVar(&cfg.OrderEnricherTimeout, "order-enricher-timeout", time.Second*10, "timeout for one iteration in order enricher")
 	flag.IntVar(&cfg.OrderEnricherChannelSize, "order-enricher-channel-size", 1000, "size of channel with orders in order enricher")

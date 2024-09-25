@@ -12,6 +12,7 @@ import (
 )
 
 type PGStorage struct {
+	connectionsLimit  int
 	dsn               string
 	DB                *sql.DB
 	OrderStorage      *orderpgstorage.OrderPGStorage
@@ -20,8 +21,9 @@ type PGStorage struct {
 	UserStorage       *userpgstorage.UserPGStorage
 }
 
-func NewPGStorage(DBDsn string) *PGStorage {
+func NewPGStorage(DBDsn string, connectionsLimit int) *PGStorage {
 	return &PGStorage{
+		connectionsLimit:  connectionsLimit,
 		dsn:               DBDsn,
 		OrderStorage:      orderpgstorage.NewOrderPGStorage(DBDsn),
 		UserStorage:       userpgstorage.NewUserPGStorage(DBDsn),
@@ -41,6 +43,8 @@ func (ps *PGStorage) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	DB.SetMaxIdleConns(ps.connectionsNum)
+	DB.SetMaxOpenConns(ps.connectionsNum)
 
 	requests := strings.Split(getDDL(), ";")
 	for _, request := range requests {

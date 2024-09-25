@@ -32,7 +32,7 @@ func NewServer(cfg *config.Config) *Server {
 	logging.Initialize(cfg.LogLevel)
 
 	// initialize storage
-	pgStorage := pgstorage.NewPGStorage(cfg.DBDsn)
+	pgStorage := pgstorage.NewPGStorage(cfg.DBDsn, cfg.ConnectionsLimit)
 	authenticator := authentication.NewAuthenticator(cfg.JWTSecretKey, cfg.TokenExp)
 	services := servicesimpl.NewServices(pgStorage.BalanceStorage, pgStorage.WithdrawalStorage, pgStorage.UserStorage, pgStorage.OrderStorage, authenticator)
 	handlers := handlersimpl.NewHandlers(services.MoneyService, services.OrderService, services.UserService)
