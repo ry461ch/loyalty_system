@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ry461ch/loyalty_system/internal/interfaces/handlers"
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
 	"github.com/ry461ch/loyalty_system/pkg/authentication/middleware"
 	"github.com/ry461ch/loyalty_system/pkg/logging/middleware"
@@ -12,9 +11,9 @@ import (
 )
 
 func NewRouter(
-	authHandlers handlers.AuthHandlers,
-	moneyHandlers handlers.MoneyHandlers,
-	orderHandlers handlers.OrderHandlers,
+	authHandlers AuthHandlers,
+	moneyHandlers MoneyHandlers,
+	orderHandlers OrderHandlers,
 	authenticator *authentication.Authenticator,
 ) chi.Router {
 	r := chi.NewRouter()

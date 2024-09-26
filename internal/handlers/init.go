@@ -1,10 +1,9 @@
-package handlersimpl
+package handlers
 
 import (
 	"github.com/ry461ch/loyalty_system/internal/handlers/auth"
 	"github.com/ry461ch/loyalty_system/internal/handlers/money"
 	"github.com/ry461ch/loyalty_system/internal/handlers/orders"
-	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
 )
 
 type Handlers struct {
@@ -14,9 +13,9 @@ type Handlers struct {
 }
 
 func NewHandlers(
-	moneyService services.MoneyService,
-	orderService services.OrderService,
-	userService services.UserService,
+	moneyService moneyhandlers.MoneyService,
+	orderService orderhandlers.OrderService,
+	userService authhandlers.UserService,
 ) *Handlers {
 	return &Handlers{
 		AuthHandlers:   authhandlers.NewAuthHandlers(userService),

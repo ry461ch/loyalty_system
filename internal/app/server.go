@@ -34,10 +34,10 @@ func NewServer(cfg *config.Config) *Server {
 	// initialize storage
 	pgStorage := pgstorage.NewPGStorage(cfg.DBDsn, cfg.ConnectionsLimit)
 	authenticator := authentication.NewAuthenticator(cfg.JWTSecretKey, cfg.TokenExp)
-	services := servicesimpl.NewServices(pgStorage.BalanceStorage, pgStorage.WithdrawalStorage, pgStorage.UserStorage, pgStorage.OrderStorage, authenticator)
-	handlers := handlersimpl.NewHandlers(services.MoneyService, services.OrderService, services.UserService)
+	services := services.NewServices(pgStorage.BalanceStorage, pgStorage.WithdrawalStorage, pgStorage.UserStorage, pgStorage.OrderStorage, authenticator)
+	handlers := handlers.NewHandlers(services.MoneyService, services.OrderService, services.UserService)
 	router := router.NewRouter(handlers.AuthHandlers, handlers.MoneyHandlers, handlers.OrdersHandlers, authenticator)
-	orderComponents := ordercomponentsimpl.NewOrderComponents(cfg, services.OrderService)
+	orderComponents := ordercomponents.NewOrderComponents(cfg, services.OrderService)
 	orderEnricher := orderenricher.NewOrderEnricher(orderComponents.Getter, orderComponents.Sender, orderComponents.Updater, cfg)
 
 	server := &http.Server{Addr: cfg.Addr.Host + ":" + strconv.FormatInt(cfg.Addr.Port, 10), Handler: router}

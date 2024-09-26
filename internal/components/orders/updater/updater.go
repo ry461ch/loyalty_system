@@ -8,18 +8,17 @@ import (
 	"time"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
-	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type OrderUpdater struct {
-	orderService services.OrderUpdaterService
+	orderService OrderUpdaterService
 	workersNum   int // RateLimit for SQL updating query
 }
 
-func NewOrderUpdater(orderService services.OrderUpdaterService, cfg *config.Config) *OrderUpdater {
+func NewOrderUpdater(orderService OrderUpdaterService, cfg *config.Config) *OrderUpdater {
 	return &OrderUpdater{
 		orderService: orderService,
 		workersNum:   cfg.OrderUpdaterRateLimit,

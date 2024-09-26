@@ -6,22 +6,21 @@ import (
 	"time"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
-	"github.com/ry461ch/loyalty_system/internal/interfaces/components"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type OrderEnricher struct {
-	orderSender      components.OrderSender
-	orderUpdater     components.OrderUpdater
-	orderGetter      components.OrderGetter
+	orderSender      OrderSender
+	orderUpdater     OrderUpdater
+	orderGetter      OrderGetter
 	iterationTimeout time.Duration
 	iterationPeriod  time.Duration
 }
 
 func NewOrderEnricher(
-	orderGetter components.OrderGetter,
-	orderSender components.OrderSender,
-	orderUpdater components.OrderUpdater,
+	orderGetter OrderGetter,
+	orderSender OrderSender,
+	orderUpdater OrderUpdater,
 	cfg *config.Config,
 ) *OrderEnricher {
 	return &OrderEnricher{

@@ -1,7 +1,6 @@
-package servicesimpl
+package services
 
 import (
-	"github.com/ry461ch/loyalty_system/internal/interfaces/storage"
 	"github.com/ry461ch/loyalty_system/internal/services/money"
 	"github.com/ry461ch/loyalty_system/internal/services/order"
 	"github.com/ry461ch/loyalty_system/internal/services/user"
@@ -15,10 +14,10 @@ type Services struct {
 }
 
 func NewServices(
-	balanceStorage storage.BalanceStorage,
-	withdrawalStorage storage.WithdrawalStorage,
-	userStorage storage.UserStorage,
-	orderStorage storage.OrderStorage,
+	balanceStorage moneyservice.BalanceStorage,
+	withdrawalStorage moneyservice.WithdrawalStorage,
+	userStorage userservice.UserStorage,
+	orderStorage orderservice.OrderStorage,
 	authenticator *authentication.Authenticator,
 ) *Services {
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)

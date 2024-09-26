@@ -8,21 +8,19 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/ry461ch/loyalty_system/internal/helpers/order"
-	"github.com/ry461ch/loyalty_system/internal/interfaces/services"
-	"github.com/ry461ch/loyalty_system/internal/interfaces/storage"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/order"
 )
 
 type OrderService struct {
-	orderStorage storage.OrderStorage
-	moneyService services.MoneyService
+	orderStorage        OrderStorage
+	accrualAdderService AccrualAdderService
 }
 
-func NewOrderService(orderStorage storage.OrderStorage, moneyService services.MoneyService) *OrderService {
+func NewOrderService(orderStorage OrderStorage, accrualAdderService AccrualAdderService) *OrderService {
 	return &OrderService{
-		orderStorage: orderStorage,
-		moneyService: moneyService,
+		orderStorage:        orderStorage,
+		accrualAdderService: accrualAdderService,
 	}
 }
 
@@ -88,7 +86,7 @@ func (os *OrderService) UpdateOrder(ctx context.Context, inputOrder *order.Order
 		return nil
 	}
 
-	err = os.moneyService.AddAccrual(ctx, *userID, *inputOrder.Accrual, tx)
+	err = os.accrualAdderService.AddAccrual(ctx, *userID, *inputOrder.Accrual, tx)
 	if err != nil {
 		tx.Rollback()
 		return err

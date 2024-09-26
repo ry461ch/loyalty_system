@@ -8,18 +8,17 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/helpers/order"
 	"github.com/ry461ch/loyalty_system/internal/helpers/transaction"
-	"github.com/ry461ch/loyalty_system/internal/interfaces/storage"
 	"github.com/ry461ch/loyalty_system/internal/models/balance"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/withdrawal"
 )
 
 type MoneyService struct {
-	balanceStorage    storage.BalanceStorage
-	withdrawalStorage storage.WithdrawalStorage
+	balanceStorage    BalanceStorage
+	withdrawalStorage WithdrawalStorage
 }
 
-func NewMoneyService(balanceStorage storage.BalanceStorage, withdrawalStorage storage.WithdrawalStorage) *MoneyService {
+func NewMoneyService(balanceStorage BalanceStorage, withdrawalStorage WithdrawalStorage) *MoneyService {
 	return &MoneyService{
 		balanceStorage:    balanceStorage,
 		withdrawalStorage: withdrawalStorage,

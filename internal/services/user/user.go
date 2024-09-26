@@ -6,18 +6,17 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/ry461ch/loyalty_system/internal/interfaces/storage"
 	"github.com/ry461ch/loyalty_system/internal/models/exceptions"
 	"github.com/ry461ch/loyalty_system/internal/models/user"
 	"github.com/ry461ch/loyalty_system/pkg/authentication"
 )
 
 type UserService struct {
-	userStorage   storage.UserStorage
+	userStorage   UserStorage
 	authenticator *authentication.Authenticator
 }
 
-func NewUserService(userStorage storage.UserStorage, authenticator *authentication.Authenticator) *UserService {
+func NewUserService(userStorage UserStorage, authenticator *authentication.Authenticator) *UserService {
 	return &UserService{
 		userStorage:   userStorage,
 		authenticator: authenticator,
