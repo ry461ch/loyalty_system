@@ -22,7 +22,6 @@ import (
 type OrderSender struct {
 	accrualAddr *netaddr.NetAddress
 	workersNum  int // RateLimit
-	channelSize int
 	client      *resty.Client
 }
 
@@ -59,7 +58,6 @@ func NewOrderSender(cfg *config.Config) *OrderSender {
 	return &OrderSender{
 		accrualAddr: &cfg.AccuralSystemAddr,
 		workersNum:  cfg.OrderSenderRateLimit,
-		channelSize: cfg.OrderSenderChannelSize,
 		client:      getClient(cfg.OrderSenderAccrualTimeout, cfg.OrderSenderAccrualRetries),
 	}
 }
@@ -143,7 +141,7 @@ func (os *OrderSender) sendOrders(ctx context.Context, orderIDsChannel <-chan st
 }
 
 func (os *OrderSender) SendOrdersGenerator(ctx context.Context, orderIDsChannel <-chan string) chan order.Order {
-	updatedOrders := make(chan order.Order, os.channelSize)
+	updatedOrders := make(chan order.Order)
 
 	go func() {
 		defer close(updatedOrders)

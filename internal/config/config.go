@@ -28,7 +28,6 @@ type Config struct {
 	OrderSenderAccrualRetries int                `env:"ORDER_SENDER_ACCRUAL_RETRIES"`
 	OrderEnricherTimeout      time.Duration      `env:"ORDER_ENRICHER_TIMEOUT"`
 	OrderEnricherPeriod       time.Duration      `env:"ORDER_ENRICHER_PERIOD"`
-	OrderSenderChannelSize    int                `env:"ORDER_SENDER_CHANNEL_SIZE"`
 }
 
 func generateJWTKey() string {
@@ -62,7 +61,6 @@ func parseArgs(cfg *Config) {
 	flag.IntVar(&cfg.ConnectionsLimit, "connections-limit", 100, "limit of postgres connections")
 	flag.DurationVar(&cfg.OrderEnricherPeriod, "order-enricher-period", time.Second*10, "period of running order enricher")
 	flag.DurationVar(&cfg.OrderEnricherTimeout, "order-enricher-timeout", time.Second*10, "timeout for one iteration in order enricher")
-	flag.IntVar(&cfg.OrderSenderChannelSize, "order-sender-channel-size", 1000, "size of channel with orders in order sender")
 	flag.IntVar(&cfg.OrderSenderAccrualRetries, "order-sender-accrual-retries", 3, "retries num for send orders to accrual service in order sender")
 	flag.IntVar(&cfg.OrderSenderRateLimit, "order-sender-rate-limit", 10, "rate limit for send orders to accrual service in order sender")
 	flag.DurationVar(&cfg.OrderSenderAccrualTimeout, "order-sender-accrual-timeout", time.Millisecond*500, "timeout for single request in order sender")

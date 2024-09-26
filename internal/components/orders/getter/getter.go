@@ -85,7 +85,7 @@ func (og *OrderGetter) getWaitingOrderIDs(ctx context.Context, orderIDsChannel c
 }
 
 func (og *OrderGetter) GetWaitingOrderIdsGenerator(ctx context.Context) chan string {
-	orderIDsChannel := make(chan string, og.getOrdersLimit)
+	orderIDsChannel := make(chan string)
 
 	go func() {
 		defer close(orderIDsChannel)
