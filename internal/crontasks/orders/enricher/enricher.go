@@ -3,7 +3,6 @@ package orderenricher
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/ry461ch/loyalty_system/internal/config"
@@ -36,9 +35,6 @@ func NewOrderEnricher(
 
 func (oe *OrderEnricher) runIteration(ctx context.Context) {
 	logging.Logger.Infof("Order Enricher: start iteration")
-
-	var wg sync.WaitGroup
-	wg.Add(3)
 
 	orderIDsChannel := oe.orderGetter.GetWaitingOrderIdsGenerator(ctx)
 
