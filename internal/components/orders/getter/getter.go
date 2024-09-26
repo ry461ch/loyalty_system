@@ -52,33 +52,45 @@ func (og *OrderGetter) getWaitingOrderIDsIteration(ctx context.Context, orderIDs
 	return &waitingOrders[len(waitingOrders)-1].CreatedAt, nil
 }
 
-func (og *OrderGetter) GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string) {
+func (og *OrderGetter) getWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string) {
 	logging.Logger.Infof("Order Getter: initiated")
 	var createdAt *time.Time
-	ticker := time.NewTicker(time.Second / time.Duration(og.rateLimit))
-	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			logging.Logger.Infof("Order Getter: gracefully shutdown")
 			return
-		case <-ticker.C:
-			var err error
-			createdAt, err = og.getWaitingOrderIDsIteration(ctx, orderIDsChannel, createdAt)
-			if err != nil {
-				if errors.Is(err, exceptions.ErrGracefullyShutDown) {
-					logging.Logger.Infof("Order Getter: gracefully shutdown")
-					return
-				}
-				logging.Logger.Errorf("Order Getter: exceptions occured while getting waiting orders: %s", err.Error())
+		default:
+		}
+
+		var err error
+		createdAt, err = og.getWaitingOrderIDsIteration(ctx, orderIDsChannel, createdAt)
+		if err != nil {
+			if errors.Is(err, exceptions.ErrGracefullyShutDown) {
+				logging.Logger.Infof("Order Getter: gracefully shutdown")
 				return
 			}
+			logging.Logger.Errorf("Order Getter: exceptions occured while getting waiting orders: %s", err.Error())
+			return
 		}
 
 		if createdAt == nil {
 			logging.Logger.Infof("Order Getter: gracefully shutdown")
 			return
 		}
+
+		time.Sleep(time.Second / time.Duration(og.rateLimit))
 	}
+}
+
+func (og *OrderGetter) GetWaitingOrderIdsGenerator(ctx context.Context) chan string {
+	orderIDsChannel := make(chan string, og.getOrdersLimit)
+
+	go func() {
+		defer close(orderIDsChannel)
+		og.getWaitingOrderIDs(ctx, orderIDsChannel)
+	}()
+
+	return orderIDsChannel
 }

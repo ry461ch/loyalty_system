@@ -8,17 +8,15 @@ import (
 
 	"github.com/ry461ch/loyalty_system/internal/config"
 	"github.com/ry461ch/loyalty_system/internal/interfaces/components"
-	"github.com/ry461ch/loyalty_system/internal/models/order"
 	"github.com/ry461ch/loyalty_system/pkg/logging"
 )
 
 type OrderEnricher struct {
-	orderSender          components.OrderSender
-	orderUpdater         components.OrderUpdater
-	orderGetter          components.OrderGetter
-	iterationChannelSize int
-	iterationTimeout     time.Duration
-	iterationPeriod      time.Duration
+	orderSender      components.OrderSender
+	orderUpdater     components.OrderUpdater
+	orderGetter      components.OrderGetter
+	iterationTimeout time.Duration
+	iterationPeriod  time.Duration
 }
 
 func NewOrderEnricher(
@@ -28,41 +26,26 @@ func NewOrderEnricher(
 	cfg *config.Config,
 ) *OrderEnricher {
 	return &OrderEnricher{
-		orderGetter:          orderGetter,
-		orderSender:          orderSender,
-		orderUpdater:         orderUpdater,
-		iterationChannelSize: cfg.OrderEnricherChannelSize,
-		iterationTimeout:     cfg.OrderEnricherTimeout,
-		iterationPeriod:      cfg.OrderEnricherPeriod,
+		orderGetter:      orderGetter,
+		orderSender:      orderSender,
+		orderUpdater:     orderUpdater,
+		iterationTimeout: cfg.OrderEnricherTimeout,
+		iterationPeriod:  cfg.OrderEnricherPeriod,
 	}
 }
 
 func (oe *OrderEnricher) runIteration(ctx context.Context) {
 	logging.Logger.Infof("Order Enricher: start iteration")
-	orderIDsChannel := make(chan string, oe.iterationChannelSize)
-	updatedOrders := make(chan order.Order, oe.iterationChannelSize)
 
 	var wg sync.WaitGroup
 	wg.Add(3)
 
-	go func() {
-		oe.orderGetter.GetWaitingOrderIDs(ctx, orderIDsChannel)
-		close(orderIDsChannel)
-		wg.Done()
-	}()
+	orderIDsChannel := oe.orderGetter.GetWaitingOrderIdsGenerator(ctx)
 
-	go func() {
-		oe.orderSender.GetUpdatedOrders(ctx, orderIDsChannel, updatedOrders)
-		close(updatedOrders)
-		wg.Done()
-	}()
+	updatedOrders := oe.orderSender.SendOrdersGenerator(ctx, orderIDsChannel)
 
-	go func() {
-		oe.orderUpdater.UpdateOrders(ctx, updatedOrders)
-		wg.Done()
-	}()
+	oe.orderUpdater.UpdateOrders(ctx, updatedOrders)
 
-	wg.Wait()
 	logging.Logger.Infof("Order Enricher: end iteration")
 }
 

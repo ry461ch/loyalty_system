@@ -11,9 +11,9 @@ type OrderUpdater interface {
 }
 
 type OrderGetter interface {
-	GetWaitingOrderIDs(ctx context.Context, orderIDsChannel chan<- string)
+	GetWaitingOrderIdsGenerator(ctx context.Context) chan string
 }
 
 type OrderSender interface {
-	GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order)
+	SendOrdersGenerator(ctx context.Context, orderIDsChannel <-chan string) chan order.Order
 }

@@ -48,9 +48,6 @@ func TestGetter(t *testing.T) {
 		}
 	}
 
-	orderIDsChannel := make(chan string, 3)
-	defer close(orderIDsChannel)
-
 	moneyService := moneyservice.NewMoneyService(balanceStorage, withdrawalStorage)
 	orderService := orderservice.NewOrderService(orderStorage, moneyService)
 	getter := OrderGetter{
@@ -60,14 +57,13 @@ func TestGetter(t *testing.T) {
 	}
 
 	start := time.Now().UTC()
-	getter.GetWaitingOrderIDs(context.TODO(), orderIDsChannel)
-	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
+	orderIDsChannel := getter.GetWaitingOrderIdsGenerator(context.TODO())
 
 	updatedOrders := map[string]bool{}
-	for range 3 {
-		updatedOrderID := <-orderIDsChannel
+	for updatedOrderID := range orderIDsChannel {
 		updatedOrders[updatedOrderID] = true
 	}
+	assert.GreaterOrEqual(t, time.Since(start), time.Second, "workers worked less than 1 second")
 
 	for _, expectedOrder := range expectedOrders {
 		if expectedOrder.Status == order.NEW || expectedOrder.Status == order.PROCESSING {

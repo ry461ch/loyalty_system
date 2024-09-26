@@ -22,6 +22,7 @@ import (
 type OrderSender struct {
 	accrualAddr *netaddr.NetAddress
 	workersNum  int // RateLimit
+	channelSize int
 	client      *resty.Client
 }
 
@@ -58,6 +59,7 @@ func NewOrderSender(cfg *config.Config) *OrderSender {
 	return &OrderSender{
 		accrualAddr: &cfg.AccuralSystemAddr,
 		workersNum:  cfg.OrderSenderRateLimit,
+		channelSize: cfg.OrderSenderChannelSize,
 		client:      getClient(cfg.OrderSenderAccrualTimeout, cfg.OrderSenderAccrualRetries),
 	}
 }
@@ -92,9 +94,6 @@ func (os *OrderSender) getOrderFromAccrual(ctx context.Context, orderID string) 
 }
 
 func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID int, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) error {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
 	for orderID := range orderIDsChannel {
 		select {
 		case <-ctx.Done():
@@ -102,35 +101,20 @@ func (os *OrderSender) getOrderFromAccrualWorker(ctx context.Context, workerID i
 		default:
 		}
 
-		if orderID == "" {
-			// if channel closed
-			return nil
-		}
 		updatedOrder, err := os.getOrderFromAccrual(ctx, orderID)
 		if err != nil {
 			logging.Logger.Warnf("Order Sender: exceptions occured for orderID: %s: %v", orderID, err)
-			break
 		}
-		if updatedOrder == nil {
-			break
-		}
-
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
-		case updatedOrders <- *updatedOrder:
+		if updatedOrder != nil {
+			updatedOrders <- *updatedOrder
 		}
 
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
-		case <-ticker.C:
-		}
+		time.Sleep(time.Second)
 	}
 	return nil
 }
 
-func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) {
+func (os *OrderSender) sendOrders(ctx context.Context, orderIDsChannel <-chan string, updatedOrders chan<- order.Order) {
 	logging.Logger.Infof("Order Sender: init with %d workers", os.workersNum)
 	var wg sync.WaitGroup
 	wg.Add(os.workersNum)
@@ -141,7 +125,7 @@ func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-c
 			err := os.getOrderFromAccrualWorker(ctx, workerID, orderIDsChannel, updatedOrders)
 			if err != nil {
 				if errors.Is(err, exceptions.ErrGracefullyShutDown) {
-					logging.Logger.Info("Order Sender:  worker %d gracefully shutdown", workerID)
+					logging.Logger.Infof("Order Sender:  worker %d gracefully shutdown", workerID)
 					wg.Done()
 					return
 				}
@@ -149,11 +133,22 @@ func (os *OrderSender) GetUpdatedOrders(ctx context.Context, orderIDsChannel <-c
 				wg.Done()
 				return
 			}
-			logging.Logger.Info("Order Sender:  worker %d successfully ended his work", workerID)
+			logging.Logger.Infof("Order Sender: worker %d successfully ended his work", workerID)
 			wg.Done()
 		}()
 	}
 
 	wg.Wait()
 	logging.Logger.Info("Order Sender: gracefully shutdown")
+}
+
+func (os *OrderSender) SendOrdersGenerator(ctx context.Context, orderIDsChannel <-chan string) chan order.Order {
+	updatedOrders := make(chan order.Order, os.channelSize)
+
+	go func() {
+		defer close(updatedOrders)
+		os.sendOrders(ctx, orderIDsChannel, updatedOrders)
+	}()
+
+	return updatedOrders
 }

@@ -27,9 +27,6 @@ func NewOrderUpdater(orderService services.OrderUpdaterService, cfg *config.Conf
 }
 
 func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, updatedOrders <-chan order.Order) error {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
 	for updatedOrder := range updatedOrders {
 		select {
 		case <-ctx.Done():
@@ -48,11 +45,7 @@ func (ou *OrderUpdater) updateOrderWorker(ctx context.Context, workerID int, upd
 			return nil
 		}
 
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("worker %d %w", workerID, exceptions.ErrGracefullyShutDown)
-		case <-ticker.C:
-		}
+		time.Sleep(time.Second)
 	}
 	return nil
 }
@@ -76,7 +69,7 @@ func (ou *OrderUpdater) UpdateOrders(ctx context.Context, updatedOrders <-chan o
 				wg.Done()
 				return
 			}
-			logging.Logger.Info("Order Updater:  worker %d successfully ended his work", workerID)
+			logging.Logger.Infof("Order Updater:  worker %d successfully ended his work", workerID)
 			wg.Done()
 		}()
 	}

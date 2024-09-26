@@ -147,7 +147,7 @@ func TestEnricher(t *testing.T) {
 		OrderSenderRateLimit:      2,
 		OrderSenderAccrualTimeout: time.Millisecond * 500,
 		OrderSenderAccrualRetries: 3,
-		OrderEnricherChannelSize:  10,
+		OrderSenderChannelSize:    2,
 	}
 
 	sender := ordersender.NewOrderSender(&cfg)

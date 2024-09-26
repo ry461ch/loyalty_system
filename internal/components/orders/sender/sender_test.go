@@ -77,13 +77,10 @@ func TestSender(t *testing.T) {
 	defer srv.Close()
 
 	orderIDsChannel := make(chan string, 3)
-	orderIDsChannel <- "1313"
 	orderIDsChannel <- "1115"
+	orderIDsChannel <- "1313"
 	orderIDsChannel <- "1214"
 	close(orderIDsChannel)
-
-	updatedOrdersChannel := make(chan order.Order, 2)
-	defer close(updatedOrdersChannel)
 
 	sender := OrderSender{
 		accrualAddr: splitURL(srv.URL),
@@ -92,17 +89,14 @@ func TestSender(t *testing.T) {
 	}
 
 	start := time.Now().UTC()
-	sender.GetUpdatedOrders(context.TODO(), orderIDsChannel, updatedOrdersChannel)
-	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
+	updatedOrdersChannel := sender.SendOrdersGenerator(context.TODO(), orderIDsChannel)
 
-	assert.Equal(t, 3, serverStorage.timesCalled, "Не прошел запрос на сервер")
-
-	order1 := <-updatedOrdersChannel
-	order2 := <-updatedOrdersChannel
-
-	updatedOrders := map[string]order.Order{
-		order1.ID: order1, order2.ID: order2,
+	updatedOrders := map[string]order.Order{}
+	for updatedOrder := range updatedOrdersChannel {
+		updatedOrders[updatedOrder.ID] = updatedOrder
 	}
+	assert.GreaterOrEqual(t, time.Since(start), time.Second*2, "workers worked less than 2 seconds")
+	assert.Equal(t, 3, serverStorage.timesCalled, "Не прошел запрос на сервер")
 
 	accrual := float64(100)
 	expectedOrders := []order.Order{
