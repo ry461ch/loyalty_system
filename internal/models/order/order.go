@@ -55,25 +55,29 @@ func (s *Status) Scan(value interface{}) error {
 		return nil
 	}
 
-	if sv, err := driver.String.ConvertValue(value); err == nil {
-		if v, ok := sv.(string); ok {
-			switch v {
-			case "NEW":
-				*s = NEW
-			case "PROCESSING":
-				*s = PROCESSING
-			case "PROCESSED":
-				*s = PROCESSED
-			case "INVALID":
-				*s = INVALID
-			default:
-				return errors.New("invalid status")
-			}
-			return nil
-		}
+	sv, err := driver.String.ConvertValue(value)
+	if err != nil {
+		return errors.New("failed to scan Status")
 	}
 
-	return errors.New("failed to scan Status")
+	v, ok := sv.(string)
+	if !ok {
+		return errors.New("failed to scan Status")
+	}
+
+	switch v {
+	case "NEW":
+		*s = NEW
+	case "PROCESSING":
+		*s = PROCESSING
+	case "PROCESSED":
+		*s = PROCESSED
+	case "INVALID":
+		*s = INVALID
+	default:
+		return errors.New("invalid status")
+	}
+	return nil
 }
 
 func (s *Status) UnmarshalJSON(data []byte) error {
